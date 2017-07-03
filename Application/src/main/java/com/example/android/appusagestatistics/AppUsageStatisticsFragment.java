@@ -33,8 +33,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -56,7 +54,6 @@ public class AppUsageStatisticsFragment extends Fragment {
     RecyclerView mRecyclerView;
     RecyclerView.LayoutManager mLayoutManager;
     Button mOpenUsageSettingButton;
-    Spinner mSpinner;
 
     /**
      * Use this factory method to create a new instance of
@@ -97,21 +94,9 @@ public class AppUsageStatisticsFragment extends Fragment {
         mRecyclerView.scrollToPosition(0);
         mRecyclerView.setAdapter(mUsageListAdapter);
         mOpenUsageSettingButton = (Button) rootView.findViewById(R.id.button_open_usage_setting);
-        mSpinner = (Spinner) rootView.findViewById(R.id.spinner_time_span);
-        SpinnerAdapter spinnerAdapter = ArrayAdapter.createFromResource(getActivity(),
-                R.array.action_list, android.R.layout.simple_spinner_dropdown_item);
-        mSpinner.setAdapter(spinnerAdapter);
-        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
-            String[] strings = getResources().getStringArray(R.array.action_list);
-
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                StatsUsageInterval statsUsageInterval = StatsUsageInterval
-                        .getValue(strings[position]);
-                if (statsUsageInterval != null) {
                     List<UsageStats> usageStatsList =
-                            getUsageStatistics(statsUsageInterval.mInterval);
+                            getUsageStatistics(StatsUsageInterval.DAILY);
 
                     Collections.sort(usageStatsList, new PackageNameComparatorDesc());
                     List<CustomUsageStats> copy = new ArrayList<>();
@@ -131,14 +116,7 @@ public class AppUsageStatisticsFragment extends Fragment {
 
                     Collections.sort(copy, new TotalTimeComparatorDesc());
                     updateAppsList(copy);
-                }
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-    }
 
     /**
      * Returns the {@link #mRecyclerView} including the time span specified by the
@@ -151,13 +129,13 @@ public class AppUsageStatisticsFragment extends Fragment {
      *
      * @return A list of {@link android.app.usage.UsageStats}.
      */
-    public List<UsageStats> getUsageStatistics(int intervalType) {
+    public List<UsageStats> getUsageStatistics(StatsUsageInterval intervalType) {
         // Get the app statistics since one year ago from the current time.
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, -1);
 
         List<UsageStats> queryUsageStats = mUsageStatsManager
-                .queryUsageStats(intervalType, cal.getTimeInMillis(),
+                .queryUsageStats(intervalType.mInterval, cal.getTimeInMillis(),
                         System.currentTimeMillis());
 
         if (queryUsageStats.size() == 0) {
