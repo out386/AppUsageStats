@@ -18,6 +18,7 @@ package com.example.android.appusagestatistics;
 
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
@@ -77,7 +78,7 @@ public class AppUsageStatisticsFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         mUsageStatsManager = (UsageStatsManager) getActivity()
-                .getSystemService("usagestats"); //Context.USAGE_STATS_SERVICE
+                .getSystemService(Context.USAGE_STATS_SERVICE);
     }
 
     @Override
@@ -111,8 +112,25 @@ public class AppUsageStatisticsFragment extends Fragment {
                 if (statsUsageInterval != null) {
                     List<UsageStats> usageStatsList =
                             getUsageStatistics(statsUsageInterval.mInterval);
-                    Collections.sort(usageStatsList, new LastTimeLaunchedComparatorDesc());
-                    updateAppsList(usageStatsList);
+
+                    Collections.sort(usageStatsList, new PackageNameComparatorDesc());
+                    List<CustomUsageStats> copy = new ArrayList<>();
+                    int lastIndex = -1;
+                    for (int i = 0; i < usageStatsList.size(); i++) {
+                        if (i > 0 && copy.get(lastIndex) != null
+                                && copy.get(lastIndex).packageName.equals(usageStatsList.get(i).getPackageName())) {
+                            copy.get(lastIndex).totalTimeInForeground = copy.get(lastIndex).totalTimeInForeground
+                                    + usageStatsList.get(i).getTotalTimeInForeground();
+                        } else {
+                            copy.add(new CustomUsageStats(usageStatsList.get(i).getPackageName(),
+                                    usageStatsList.get(i).getTotalTimeInForeground()));
+                            lastIndex ++;
+                        }
+
+                    }
+
+                    Collections.sort(copy, new TotalTimeComparatorDesc());
+                    updateAppsList(copy);
                 }
             }
 
@@ -165,37 +183,45 @@ public class AppUsageStatisticsFragment extends Fragment {
      *                       {@link #mRecyclerView}.
      */
     //VisibleForTesting
-    void updateAppsList(List<UsageStats> usageStatsList) {
-        List<CustomUsageStats> customUsageStatsList = new ArrayList<>();
+    void updateAppsList(List<CustomUsageStats> usageStatsList) {
         for (int i = 0; i < usageStatsList.size(); i++) {
-            CustomUsageStats customUsageStats = new CustomUsageStats();
-            customUsageStats.usageStats = usageStatsList.get(i);
             try {
-                Drawable appIcon = getActivity().getPackageManager()
-                        .getApplicationIcon(customUsageStats.usageStats.getPackageName());
-                customUsageStats.appIcon = appIcon;
+                usageStatsList.get(i).appIcon = getActivity().getPackageManager()
+                        .getApplicationIcon(usageStatsList.get(i).packageName);
             } catch (PackageManager.NameNotFoundException e) {
                 Log.w(TAG, String.format("App Icon is not found for %s",
-                        customUsageStats.usageStats.getPackageName()));
-                customUsageStats.appIcon = getActivity()
+                        usageStatsList.get(i).packageName));
+                usageStatsList.get(i).appIcon = getActivity()
                         .getDrawable(R.drawable.ic_default_app_launcher);
             }
-            customUsageStatsList.add(customUsageStats);
+            Log.i(TAG, "updateAppsList: " + usageStatsList.get(i).packageName + usageStatsList.get(i).totalTimeInForeground);
         }
-        mUsageListAdapter.setCustomUsageStatsList(customUsageStatsList);
+        mUsageListAdapter.setCustomUsageStatsList(usageStatsList);
         mUsageListAdapter.notifyDataSetChanged();
         mRecyclerView.scrollToPosition(0);
     }
 
     /**
-     * The {@link Comparator} to sort a collection of {@link UsageStats} sorted by the timestamp
-     * last time the app was used in the descendant order.
+     * The {@link Comparator} to sort a collection of {@link UsageStats} sorted by the total
+     * time in foreground the app was in the descendant order.
      */
-    private static class LastTimeLaunchedComparatorDesc implements Comparator<UsageStats> {
+    private static class TotalTimeComparatorDesc implements Comparator<CustomUsageStats> {
+
+        @Override
+        public int compare(CustomUsageStats left, CustomUsageStats right) {
+            return Long.compare(right.totalTimeInForeground, left.totalTimeInForeground);
+        }
+    }
+
+    /**
+     * The {@link Comparator} to sort a collection of {@link UsageStats} sorted by the package name
+     * in the descendant order.
+     */
+    private static class PackageNameComparatorDesc implements Comparator<UsageStats> {
 
         @Override
         public int compare(UsageStats left, UsageStats right) {
-            return Long.compare(right.getLastTimeUsed(), left.getLastTimeUsed());
+            return right.getPackageName().compareTo(left.getPackageName());
         }
     }
 

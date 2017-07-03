@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Provide views to RecyclerView with the directory entries.
@@ -35,7 +36,7 @@ import java.util.List;
 public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.ViewHolder> {
 
     private List<CustomUsageStats> mCustomUsageStatsList = new ArrayList<>();
-    private DateFormat mDateFormat = new SimpleDateFormat();
+    private DateFormat mDateFormat = new SimpleDateFormat("HH:mm:ss");
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
@@ -78,8 +79,11 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         viewHolder.getPackageName().setText(
-                mCustomUsageStatsList.get(position).usageStats.getPackageName());
-        long lastTimeUsed = mCustomUsageStatsList.get(position).usageStats.getLastTimeUsed();
+                mCustomUsageStatsList.get(position).packageName);
+        long lastTimeUsed = mCustomUsageStatsList.get(position).totalTimeInForeground;
+
+        mDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         viewHolder.getLastTimeUsed().setText(mDateFormat.format(new Date(lastTimeUsed)));
         viewHolder.getAppIcon().setImageDrawable(mCustomUsageStatsList.get(position).appIcon);
     }

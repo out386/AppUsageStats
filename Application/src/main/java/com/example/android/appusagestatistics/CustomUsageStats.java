@@ -23,6 +23,12 @@ import android.graphics.drawable.Drawable;
  * Entity class represents usage stats and app icon.
  */
 public class CustomUsageStats {
-    public UsageStats usageStats;
+    public String packageName;
     public Drawable appIcon;
+    public long totalTimeInForeground;
+
+    public CustomUsageStats(String packageName, long totalTimeInForeground) {
+        this.packageName = packageName;
+        this.totalTimeInForeground = totalTimeInForeground;
+    }
 }
