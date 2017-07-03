@@ -24,6 +24,7 @@ import android.graphics.drawable.Drawable;
  */
 public class CustomUsageStats {
     public String packageName;
+    String appName;
     public Drawable appIcon;
     public long totalTimeInForeground;
 

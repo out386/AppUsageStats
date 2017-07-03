@@ -20,6 +20,7 @@ import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -166,6 +167,7 @@ public class AppUsageStatisticsFragment extends Fragment {
             try {
                 usageStatsList.get(i).appIcon = getActivity().getPackageManager()
                         .getApplicationIcon(usageStatsList.get(i).packageName);
+                usageStatsList.get(i).appName = getAppName(usageStatsList.get(i).packageName);
             } catch (PackageManager.NameNotFoundException e) {
                 Log.w(TAG, String.format("App Icon is not found for %s",
                         usageStatsList.get(i).packageName));
@@ -231,5 +233,20 @@ public class AppUsageStatisticsFragment extends Fragment {
             }
             return null;
         }
+    }
+
+    private String getAppName(String packageName) {
+        ApplicationInfo applicationInfo;
+        PackageManager packageManager = getActivity().getPackageManager();
+        try {
+            applicationInfo = packageManager
+                    .getApplicationInfo(packageName, 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            return packageName;
+        }
+        if (applicationInfo != null)
+            return packageManager.getApplicationLabel(applicationInfo).toString();
+        else
+            return packageName;
     }
 }

@@ -79,7 +79,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         viewHolder.getPackageName().setText(
-                mCustomUsageStatsList.get(position).packageName);
+                mCustomUsageStatsList.get(position).appName);
         long lastTimeUsed = mCustomUsageStatsList.get(position).totalTimeInForeground;
 
         mDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
