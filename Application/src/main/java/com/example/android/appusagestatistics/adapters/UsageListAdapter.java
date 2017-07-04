@@ -81,8 +81,9 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         viewHolder.mPackageName.setText(
                 mCustomUsageStatsList.get(position).appName);
 
-        long startTime = mCustomUsageStatsList.get(position).startTime;
-        long endTime = mCustomUsageStatsList.get(position).endTime;
+        // Rounding off to the nearest second, as we aren't showing milliseconds
+        long startTime = Math.round(mCustomUsageStatsList.get(position).startTime / 1000D) * 1000;
+        long endTime = Math.round(mCustomUsageStatsList.get(position).endTime / 1000D) * 1000;
         boolean ongoing = mCustomUsageStatsList.get(position).ongoing;
         long totalTime = endTime - startTime;
 
