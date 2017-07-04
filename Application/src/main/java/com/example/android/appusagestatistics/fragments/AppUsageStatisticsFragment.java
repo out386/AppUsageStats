@@ -115,18 +115,20 @@ public class AppUsageStatisticsFragment extends Fragment {
         for (int i = 0; i < usageStatsList.size(); i++) {
             String eventType = null;
 
-            if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND)
+            if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
                 eventType = Constants.FG;
-            else if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND)
+                copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
+                        eventType, usageStatsList.get(i).getTimeStamp()));
+            }
+            else if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND) {
                 eventType = Constants.BG;
-
-            copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
-                    eventType, usageStatsList.get(i).getTimeStamp()));
-
+                copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
+                        eventType, usageStatsList.get(i).getTimeStamp()));
+            }
         }
 
         Collections.sort(copy, new TimestampComparator());
-        copy = FormatCustomUsageEvents.removeOld(copy);
+        //copy = FormatCustomUsageEvents.removeOld(copy);
         updateAppsList(FormatCustomUsageEvents.mergeBgFg(copy));
     }
 

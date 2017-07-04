@@ -37,7 +37,7 @@ public class FormatCustomUsageEvents {
     public static List<DisplayUsageEvents> mergeBgFg(List<CustomUsageEvents> events) {
         List<DisplayUsageEvents> copy = new ArrayList<>();
 //        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        events = removeNulls(events);
+        //events = removeNulls(events);
 
         boolean skip = false;
         for (int i = 0; i < events.size() - 1; i++) {
@@ -69,14 +69,18 @@ public class FormatCustomUsageEvents {
         }
         Log.i("GAAH2", "mergeBgFg: Original Size/2 " + events.size() / 2);
         Log.i("GAAH2", "mergeBgFg: new size " + copy.size());
-        return copy;
+        return removeDuplicateOngoing(copy);
     }
 
-    private static List<CustomUsageEvents> removeNulls(List<CustomUsageEvents> events) {
-        List<CustomUsageEvents> copy = new ArrayList<>();
-        for (CustomUsageEvents event : events)
-            if (event.eventType != null)
-                copy.add(event);
+    private static List<DisplayUsageEvents> removeDuplicateOngoing(List<DisplayUsageEvents> events) {
+        // We want to filter out "ongoing"s from the middle of the list, as those are mistakes caused by getUsageEvents
+        List<DisplayUsageEvents> copy = new ArrayList<>();
+        for (int i = 0; i < events.size(); i++) {
+            if (events.get(i).ongoing && i > 0)
+                continue;
+            copy.add(events.get(i));
+        }
+
         return copy;
     }
 }
