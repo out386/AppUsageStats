@@ -14,9 +14,8 @@
 * limitations under the License.
 */
 
-package com.example.android.appusagestatistics;
+package com.example.android.appusagestatistics.models;
 
-import android.app.usage.UsageStats;
 import android.graphics.drawable.Drawable;
 
 /**
@@ -24,7 +23,7 @@ import android.graphics.drawable.Drawable;
  */
 public class CustomUsageStats {
     public String packageName;
-    String appName;
+    public String appName;
     public Drawable appIcon;
     public long totalTimeInForeground;
 

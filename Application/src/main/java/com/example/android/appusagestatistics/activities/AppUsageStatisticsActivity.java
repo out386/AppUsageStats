@@ -14,10 +14,13 @@
 * limitations under the License.
 */
 
-package com.example.android.appusagestatistics;
+package com.example.android.appusagestatistics.activities;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+
+import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
+import com.example.android.appusagestatistics.R;
 
 /**
  * Launcher Activity for the App Usage Statistics sample app.

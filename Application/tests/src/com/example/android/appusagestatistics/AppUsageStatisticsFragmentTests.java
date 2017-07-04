@@ -16,7 +16,9 @@
 
 package com.example.android.appusagestatistics;
 
-import com.example.android.appusagestatistics.AppUsageStatisticsFragment.StatsUsageInterval;
+import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
+import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment.StatsUsageInterval;
+import com.example.android.appusagestatistics.activities.AppUsageStatisticsActivity;
 
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -26,7 +28,7 @@ import android.test.UiThreadTest;
 import java.util.List;
 
 /**
- * Tests for {@link com.example.android.appusagestatistics.AppUsageStatisticsFragment}.
+ * Tests for {@link AppUsageStatisticsFragment}.
  */
 public class AppUsageStatisticsFragmentTests
         extends ActivityInstrumentationTestCase2<AppUsageStatisticsActivity> {

@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-package com.example.android.appusagestatistics;
+package com.example.android.appusagestatistics.fragments;
 
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
@@ -31,15 +30,19 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.example.android.appusagestatistics.models.CustomUsageStats;
+import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.adapters.UsageListAdapter;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
+
+import com.example.android.appusagestatistics.comparators.Comparators;
+
 import java.util.List;
 
 /**
@@ -81,7 +84,7 @@ public class AppUsageStatisticsFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_app_usage_statistics, container, false);
     }
 
@@ -96,28 +99,34 @@ public class AppUsageStatisticsFragment extends Fragment {
         mRecyclerView.setAdapter(mUsageListAdapter);
         mOpenUsageSettingButton = (Button) rootView.findViewById(R.id.button_open_usage_setting);
 
-                    List<UsageStats> usageStatsList =
-                            getUsageStatistics(StatsUsageInterval.DAILY);
 
-                    Collections.sort(usageStatsList, new PackageNameComparatorDesc());
-                    List<CustomUsageStats> copy = new ArrayList<>();
-                    int lastIndex = -1;
-                    for (int i = 0; i < usageStatsList.size(); i++) {
-                        if (i > 0 && copy.get(lastIndex) != null
-                                && copy.get(lastIndex).packageName.equals(usageStatsList.get(i).getPackageName())) {
-                            copy.get(lastIndex).totalTimeInForeground = copy.get(lastIndex).totalTimeInForeground
-                                    + usageStatsList.get(i).getTotalTimeInForeground();
-                        } else {
-                            copy.add(new CustomUsageStats(usageStatsList.get(i).getPackageName(),
-                                    usageStatsList.get(i).getTotalTimeInForeground()));
-                            lastIndex ++;
-                        }
+    }
 
-                    }
+    @Override
+    public void onResume() {
+        super.onResume();
+        List<UsageStats> usageStatsList =
+                getUsageStatistics(StatsUsageInterval.DAILY);
 
-                    Collections.sort(copy, new TotalTimeComparatorDesc());
-                    updateAppsList(copy);
+        Collections.sort(usageStatsList, new Comparators.PackageNameComparatorDesc());
+        List<CustomUsageStats> copy = new ArrayList<>();
+        int lastIndex = -1;
+        for (int i = 0; i < usageStatsList.size(); i++) {
+            if (i > 0 && copy.get(lastIndex) != null
+                    && copy.get(lastIndex).packageName.equals(usageStatsList.get(i).getPackageName())) {
+                copy.get(lastIndex).totalTimeInForeground = copy.get(lastIndex).totalTimeInForeground
+                        + usageStatsList.get(i).getTotalTimeInForeground();
+            } else {
+                copy.add(new CustomUsageStats(usageStatsList.get(i).getPackageName(),
+                        usageStatsList.get(i).getTotalTimeInForeground()));
+                lastIndex++;
             }
+
+        }
+
+        Collections.sort(copy, new Comparators.TotalTimeComparatorDesc());
+        updateAppsList(copy);
+    }
 
     /**
      * Returns the {@link #mRecyclerView} including the time span specified by the
@@ -127,7 +136,6 @@ public class AppUsageStatisticsFragment extends Fragment {
      *                     Corresponding to the value of {@link UsageStatsManager}.
      *                     E.g. {@link UsageStatsManager#INTERVAL_DAILY}, {@link
      *                     UsageStatsManager#INTERVAL_WEEKLY},
-     *
      * @return A list of {@link android.app.usage.UsageStats}.
      */
     public List<UsageStats> getUsageStatistics(StatsUsageInterval intervalType) {
@@ -181,34 +189,10 @@ public class AppUsageStatisticsFragment extends Fragment {
         mRecyclerView.scrollToPosition(0);
     }
 
-    /**
-     * The {@link Comparator} to sort a collection of {@link UsageStats} sorted by the total
-     * time in foreground the app was in the descendant order.
-     */
-    private static class TotalTimeComparatorDesc implements Comparator<CustomUsageStats> {
-
-        @Override
-        public int compare(CustomUsageStats left, CustomUsageStats right) {
-            return Long.compare(right.totalTimeInForeground, left.totalTimeInForeground);
-        }
-    }
-
-    /**
-     * The {@link Comparator} to sort a collection of {@link UsageStats} sorted by the package name
-     * in the descendant order.
-     */
-    private static class PackageNameComparatorDesc implements Comparator<UsageStats> {
-
-        @Override
-        public int compare(UsageStats left, UsageStats right) {
-            return right.getPackageName().compareTo(left.getPackageName());
-        }
-    }
 
     /**
      * Enum represents the intervals for {@link android.app.usage.UsageStatsManager} so that
      * values for intervals can be found by a String representation.
-     *
      */
     //VisibleForTesting
     static enum StatsUsageInterval {

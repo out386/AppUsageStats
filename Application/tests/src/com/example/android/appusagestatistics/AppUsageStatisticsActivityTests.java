@@ -32,6 +32,9 @@ package com.example.android.appusagestatistics;
 
 import android.test.ActivityInstrumentationTestCase2;
 
+import com.example.android.appusagestatistics.activities.AppUsageStatisticsActivity;
+import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
+
 /**
  * Tests for {@link AppUsageStatisticsActivity}.
  */
