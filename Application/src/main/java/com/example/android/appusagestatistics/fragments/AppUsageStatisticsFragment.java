@@ -34,6 +34,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.android.appusagestatistics.models.DisplayUsageEvents;
+import com.example.android.appusagestatistics.utils.Constants;
+import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 import com.example.android.appusagestatistics.utils.comparators.TimestampComparator;
 import com.example.android.appusagestatistics.models.CustomUsageEvents;
 import com.example.android.appusagestatistics.R;
@@ -92,7 +95,7 @@ public class AppUsageStatisticsFragment extends Fragment {
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
 
-        mUsageListAdapter = new UsageListAdapter();
+        mUsageListAdapter = new UsageListAdapter(getContext());
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview_app_usage);
         mLayoutManager = mRecyclerView.getLayoutManager();
         mRecyclerView.scrollToPosition(0);
@@ -113,9 +116,9 @@ public class AppUsageStatisticsFragment extends Fragment {
             String eventType = null;
 
             if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND)
-                eventType = "Moved to foreground";
+                eventType = Constants.FG;
             else if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND)
-                eventType = "Moved to background";
+                eventType = Constants.BG;
 
             copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
                     eventType, usageStatsList.get(i).getTimeStamp()));
@@ -123,7 +126,8 @@ public class AppUsageStatisticsFragment extends Fragment {
         }
 
         Collections.sort(copy, new TimestampComparator());
-        updateAppsList(copy);
+        copy = FormatCustomUsageEvents.removeOld(copy);
+        updateAppsList(FormatCustomUsageEvents.mergeBgFg(copy));
     }
 
     /**
@@ -133,7 +137,6 @@ public class AppUsageStatisticsFragment extends Fragment {
      * @return A list of {@link android.app.usage.UsageStats}.
      */
     public List<UsageEvents.Event> getUsageEvents() {
-        // Get the app statistics since one year ago from the current time.
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
 
@@ -172,15 +175,13 @@ public class AppUsageStatisticsFragment extends Fragment {
      *                       {@link #mRecyclerView}.
      */
     //VisibleForTesting
-    void updateAppsList(List<CustomUsageEvents> usageStatsList) {
+    void updateAppsList(List<DisplayUsageEvents> usageStatsList) {
         for (int i = 0; i < usageStatsList.size(); i++) {
             try {
                 usageStatsList.get(i).appIcon = getActivity().getPackageManager()
                         .getApplicationIcon(usageStatsList.get(i).packageName);
                 usageStatsList.get(i).appName = getAppName(usageStatsList.get(i).packageName);
             } catch (PackageManager.NameNotFoundException e) {
-                Log.w(TAG, String.format("App Icon is not found for %s",
-                        usageStatsList.get(i).packageName));
                 usageStatsList.get(i).appIcon = getActivity()
                         .getDrawable(R.drawable.ic_default_app_launcher);
             }
