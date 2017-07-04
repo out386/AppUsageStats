@@ -52,6 +52,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         private final TextView mStartTime;
         private final TextView mEndTime;
         private final TextView mTotalTime;
+        private final TextView mEndTimeLabel;
         private final ImageView mAppIcon;
 
         ViewHolder(View v) {
@@ -59,6 +60,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
             mPackageName = (TextView) v.findViewById(R.id.textview_package_name);
             mStartTime = (TextView) v.findViewById(R.id.start_time);
             mEndTime = (TextView) v.findViewById(R.id.end_time);
+            mEndTimeLabel = (TextView) v.findViewById(R.id.end_time_label);
             mTotalTime = (TextView) v.findViewById(R.id.total_time);
             mAppIcon = (ImageView) v.findViewById(R.id.app_icon);
         }
@@ -91,8 +93,12 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         viewHolder.mStartTime.setText(mDateFormat.format(new Date(startTime)));
         if (ongoing) {
             viewHolder.mEndTime.setVisibility(View.GONE);
+            viewHolder.mEndTimeLabel.setVisibility(View.GONE);
             viewHolder.mTotalTime.setText(mContext.getResources().getString(R.string.ongoing));
             return;
+        } else {
+            viewHolder.mEndTime.setVisibility(View.VISIBLE);
+            viewHolder.mEndTimeLabel.setVisibility(View.VISIBLE);
         }
         viewHolder.mEndTime.setText(mDateFormat.format(new Date(endTime)));
         viewHolder.mTotalTime.setText(mDateFormatTotal.format(new Date(totalTime)));

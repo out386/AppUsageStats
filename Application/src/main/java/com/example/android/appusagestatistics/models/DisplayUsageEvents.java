@@ -16,8 +16,9 @@ public class DisplayUsageEvents {
         this.endTime = endTime;
     }
 
-    public DisplayUsageEvents(String packageName, boolean ongoing) {
+    public DisplayUsageEvents(String packageName, long startTime, boolean ongoing) {
         this.packageName = packageName;
+        this.startTime = startTime;
         this.ongoing = ongoing;
     }
 }
