@@ -24,48 +24,37 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.appusagestatistics.R;
-import com.example.android.appusagestatistics.models.CustomUsageStats;
+import com.example.android.appusagestatistics.models.CustomUsageEvents;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 /**
  * Provide views to RecyclerView with the directory entries.
  */
 public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.ViewHolder> {
 
-    private List<CustomUsageStats> mCustomUsageStatsList = new ArrayList<>();
+    private List<CustomUsageEvents> mCustomUsageStatsList = new ArrayList<>();
     private DateFormat mDateFormat = new SimpleDateFormat("HH:mm:ss");
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView mPackageName;
-        private final TextView mLastTimeUsed;
+        private final TextView mEventTime;
+        private final TextView mEventType;
         private final ImageView mAppIcon;
 
-        public ViewHolder(View v) {
+        ViewHolder(View v) {
             super(v);
             mPackageName = (TextView) v.findViewById(R.id.textview_package_name);
-            mLastTimeUsed = (TextView) v.findViewById(R.id.textview_last_time_used);
+            mEventTime = (TextView) v.findViewById(R.id.event_time);
+            mEventType = (TextView) v.findViewById(R.id.event_type);
             mAppIcon = (ImageView) v.findViewById(R.id.app_icon);
-        }
-
-        public TextView getLastTimeUsed() {
-            return mLastTimeUsed;
-        }
-
-        public TextView getPackageName() {
-            return mPackageName;
-        }
-
-        public ImageView getAppIcon() {
-            return mAppIcon;
         }
     }
 
@@ -81,14 +70,15 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
-        viewHolder.getPackageName().setText(
+        viewHolder.mPackageName.setText(
                 mCustomUsageStatsList.get(position).appName);
-        long lastTimeUsed = mCustomUsageStatsList.get(position).totalTimeInForeground;
 
-        mDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        long lastTimeUsed = mCustomUsageStatsList.get(position).timestamp;
+        String eventTypeString = mCustomUsageStatsList.get(position).eventType;
 
-        viewHolder.getLastTimeUsed().setText(mDateFormat.format(new Date(lastTimeUsed)));
-        viewHolder.getAppIcon().setImageDrawable(mCustomUsageStatsList.get(position).appIcon);
+        viewHolder.mEventTime.setText(mDateFormat.format(new Date(lastTimeUsed)));
+        viewHolder.mEventType.setText(eventTypeString);
+        viewHolder.mAppIcon.setImageDrawable(mCustomUsageStatsList.get(position).appIcon);
     }
 
     @Override
@@ -96,7 +86,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         return mCustomUsageStatsList.size();
     }
 
-    public void setCustomUsageStatsList(List<CustomUsageStats> customUsageStats) {
+    public void setCustomUsageStatsList(List<CustomUsageEvents> customUsageStats) {
         mCustomUsageStatsList = customUsageStats;
     }
 }

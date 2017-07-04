@@ -16,6 +16,7 @@
 
 package com.example.android.appusagestatistics.fragments;
 
+import android.app.usage.UsageEvents;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
@@ -33,15 +34,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.example.android.appusagestatistics.models.CustomUsageStats;
+import com.example.android.appusagestatistics.utils.comparators.TimestampComparator;
+import com.example.android.appusagestatistics.models.CustomUsageEvents;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-
-import com.example.android.appusagestatistics.comparators.Comparators;
 
 import java.util.List;
 
@@ -105,26 +105,24 @@ public class AppUsageStatisticsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        List<UsageStats> usageStatsList =
-                getUsageStatistics(StatsUsageInterval.DAILY);
+        List<UsageEvents.Event> usageStatsList =
+                getUsageEvents();
 
-        Collections.sort(usageStatsList, new Comparators.PackageNameComparatorDesc());
-        List<CustomUsageStats> copy = new ArrayList<>();
-        int lastIndex = -1;
+        List<CustomUsageEvents> copy = new ArrayList<>();
         for (int i = 0; i < usageStatsList.size(); i++) {
-            if (i > 0 && copy.get(lastIndex) != null
-                    && copy.get(lastIndex).packageName.equals(usageStatsList.get(i).getPackageName())) {
-                copy.get(lastIndex).totalTimeInForeground = copy.get(lastIndex).totalTimeInForeground
-                        + usageStatsList.get(i).getTotalTimeInForeground();
-            } else {
-                copy.add(new CustomUsageStats(usageStatsList.get(i).getPackageName(),
-                        usageStatsList.get(i).getTotalTimeInForeground()));
-                lastIndex++;
-            }
+            String eventType = null;
+
+            if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND)
+                eventType = "Moved to foreground";
+            else if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND)
+                eventType = "Moved to background";
+
+            copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
+                    eventType, usageStatsList.get(i).getTimeStamp()));
 
         }
 
-        Collections.sort(copy, new Comparators.TotalTimeComparatorDesc());
+        Collections.sort(copy, new TimestampComparator());
         updateAppsList(copy);
     }
 
@@ -132,22 +130,18 @@ public class AppUsageStatisticsFragment extends Fragment {
      * Returns the {@link #mRecyclerView} including the time span specified by the
      * intervalType argument.
      *
-     * @param intervalType The time interval by which the stats are aggregated.
-     *                     Corresponding to the value of {@link UsageStatsManager}.
-     *                     E.g. {@link UsageStatsManager#INTERVAL_DAILY}, {@link
-     *                     UsageStatsManager#INTERVAL_WEEKLY},
      * @return A list of {@link android.app.usage.UsageStats}.
      */
-    public List<UsageStats> getUsageStatistics(StatsUsageInterval intervalType) {
+    public List<UsageEvents.Event> getUsageEvents() {
         // Get the app statistics since one year ago from the current time.
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.YEAR, -1);
+        cal.add(Calendar.DATE, -1);
 
-        List<UsageStats> queryUsageStats = mUsageStatsManager
-                .queryUsageStats(intervalType.mInterval, cal.getTimeInMillis(),
+        UsageEvents queryUsageEvents = mUsageStatsManager
+                .queryEvents(cal.getTimeInMillis(),
                         System.currentTimeMillis());
 
-        if (queryUsageStats.size() == 0) {
+        if (!queryUsageEvents.hasNextEvent()) {
             Log.i(TAG, "The user may not allow the access to apps usage. ");
             Toast.makeText(getActivity(),
                     getString(R.string.explanation_access_to_appusage_is_not_enabled),
@@ -160,7 +154,15 @@ public class AppUsageStatisticsFragment extends Fragment {
                 }
             });
         }
-        return queryUsageStats;
+
+        UsageEvents.Event event = new UsageEvents.Event();
+        List<UsageEvents.Event> events = new ArrayList<>();
+        while (queryUsageEvents.getNextEvent(event)) {
+            events.add(event);
+            event = new UsageEvents.Event();
+        }
+
+        return events;
     }
 
     /**
@@ -170,7 +172,7 @@ public class AppUsageStatisticsFragment extends Fragment {
      *                       {@link #mRecyclerView}.
      */
     //VisibleForTesting
-    void updateAppsList(List<CustomUsageStats> usageStatsList) {
+    void updateAppsList(List<CustomUsageEvents> usageStatsList) {
         for (int i = 0; i < usageStatsList.size(); i++) {
             try {
                 usageStatsList.get(i).appIcon = getActivity().getPackageManager()
@@ -182,41 +184,10 @@ public class AppUsageStatisticsFragment extends Fragment {
                 usageStatsList.get(i).appIcon = getActivity()
                         .getDrawable(R.drawable.ic_default_app_launcher);
             }
-            Log.i(TAG, "updateAppsList: " + usageStatsList.get(i).packageName + usageStatsList.get(i).totalTimeInForeground);
         }
         mUsageListAdapter.setCustomUsageStatsList(usageStatsList);
         mUsageListAdapter.notifyDataSetChanged();
         mRecyclerView.scrollToPosition(0);
-    }
-
-
-    /**
-     * Enum represents the intervals for {@link android.app.usage.UsageStatsManager} so that
-     * values for intervals can be found by a String representation.
-     */
-    //VisibleForTesting
-    static enum StatsUsageInterval {
-        DAILY("Daily", UsageStatsManager.INTERVAL_DAILY),
-        WEEKLY("Weekly", UsageStatsManager.INTERVAL_WEEKLY),
-        MONTHLY("Monthly", UsageStatsManager.INTERVAL_MONTHLY),
-        YEARLY("Yearly", UsageStatsManager.INTERVAL_YEARLY);
-
-        private int mInterval;
-        private String mStringRepresentation;
-
-        StatsUsageInterval(String stringRepresentation, int interval) {
-            mStringRepresentation = stringRepresentation;
-            mInterval = interval;
-        }
-
-        static StatsUsageInterval getValue(String stringRepresentation) {
-            for (StatsUsageInterval statsUsageInterval : values()) {
-                if (statsUsageInterval.mStringRepresentation.equals(stringRepresentation)) {
-                    return statsUsageInterval;
-                }
-            }
-            return null;
-        }
     }
 
     private String getAppName(String packageName) {

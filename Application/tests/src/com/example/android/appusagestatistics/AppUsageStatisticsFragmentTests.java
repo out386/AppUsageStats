@@ -76,7 +76,7 @@ public class AppUsageStatisticsFragmentTests
 
     public void testGetUsageStatistics() {
         List<UsageStats> usageStatsList = mTestFragment
-                .getUsageStatistics(UsageStatsManager.INTERVAL_DAILY);
+                .getUsageEvents(UsageStatsManager.INTERVAL_DAILY);
 
         // Whether the usageStatsList has any UsageStats depends on if the app is granted
         // the access to App usage statistics.
@@ -87,7 +87,7 @@ public class AppUsageStatisticsFragmentTests
     @UiThreadTest
     public void testUpdateAppsList() {
         List<UsageStats> usageStatsList = mTestFragment
-                .getUsageStatistics(UsageStatsManager.INTERVAL_DAILY);
+                .getUsageEvents(UsageStatsManager.INTERVAL_DAILY);
         mTestFragment.updateAppsList(usageStatsList);
 
         // The result depends on if the app is granted the access to App usage statistics.

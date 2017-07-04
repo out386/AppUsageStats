@@ -21,14 +21,16 @@ import android.graphics.drawable.Drawable;
 /**
  * Entity class represents usage stats and app icon.
  */
-public class CustomUsageStats {
+public class CustomUsageEvents {
     public String packageName;
     public String appName;
     public Drawable appIcon;
-    public long totalTimeInForeground;
+    public long timestamp;
+    public String eventType;
 
-    public CustomUsageStats(String packageName, long totalTimeInForeground) {
+    public CustomUsageEvents(String packageName, String eventType, long timestamp) {
         this.packageName = packageName;
-        this.totalTimeInForeground = totalTimeInForeground;
+        this.timestamp = timestamp;
+        this.eventType = eventType;
     }
 }
