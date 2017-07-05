@@ -40,7 +40,7 @@ import java.util.TimeZone;
 public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.ViewHolder> {
 
     private List<DisplayUsageEvents> mCustomUsageStatsList = new ArrayList<>();
-    private DateFormat mDateFormat = new SimpleDateFormat("HH:mm:ss");
+    private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a");
     private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss");
     private Context mContext;
 
