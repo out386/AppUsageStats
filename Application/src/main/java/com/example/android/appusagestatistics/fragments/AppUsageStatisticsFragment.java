@@ -113,7 +113,7 @@ public class AppUsageStatisticsFragment extends Fragment {
 
         List<CustomUsageEvents> copy = new ArrayList<>();
         for (int i = 0; i < usageStatsList.size(); i++) {
-            String eventType = null;
+            String eventType;
 
             if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
                 eventType = Constants.FG;
@@ -128,14 +128,13 @@ public class AppUsageStatisticsFragment extends Fragment {
         }
 
         Collections.sort(copy, new TimestampComparator());
-        //copy = FormatCustomUsageEvents.removeOld(copy);
+        copy = FormatCustomUsageEvents.removeOld(copy);
         updateAppsList(FormatCustomUsageEvents.mergeBgFg(copy));
     }
 
     /**
      * Returns the {@link #mRecyclerView} including the time span specified by the
      * intervalType argument.
-     *
      * @return A list of {@link android.app.usage.UsageStats}.
      */
     public List<UsageEvents.Event> getUsageEvents() {

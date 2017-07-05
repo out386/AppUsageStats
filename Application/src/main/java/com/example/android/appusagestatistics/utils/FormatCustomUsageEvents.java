@@ -22,12 +22,13 @@ public class FormatCustomUsageEvents {
     public static List<CustomUsageEvents> removeOld(List<CustomUsageEvents> events) {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.AM_PM, Calendar.AM);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         long todayMillis = calendar.getTimeInMillis();
         List<CustomUsageEvents> copy = new ArrayList<>();
         for (CustomUsageEvents event : events)
-            if (event.timestamp > todayMillis)
+            if (event.timestamp >= todayMillis)
                 copy.add(event);
         Log.i("GAAH", "removeOld: Original size " + events.size());
         Log.i("GAAH", "removeOld: Copy size " + copy.size());
