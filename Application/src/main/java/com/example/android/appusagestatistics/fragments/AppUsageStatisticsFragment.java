@@ -129,7 +129,10 @@ public class AppUsageStatisticsFragment extends Fragment {
 
         Collections.sort(copy, new TimestampComparator());
         copy = FormatCustomUsageEvents.removeOld(copy);
-        updateAppsList(FormatCustomUsageEvents.mergeBgFg(copy));
+        List<DisplayUsageEvents> displayUsageEventsList = FormatCustomUsageEvents.mergeBgFg(copy);
+        displayUsageEventsList = FormatCustomUsageEvents.mergeSame(displayUsageEventsList);
+
+        updateAppsList(displayUsageEventsList);
     }
 
     /**

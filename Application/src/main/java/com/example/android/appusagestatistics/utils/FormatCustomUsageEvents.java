@@ -3,15 +3,12 @@ package com.example.android.appusagestatistics.utils;
 import android.util.Log;
 
 import com.example.android.appusagestatistics.models.CustomUsageEvents;
+import com.example.android.appusagestatistics.models.DisplayUsageEvents;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
-
-import com.example.android.appusagestatistics.models.DisplayUsageEvents;
-import com.example.android.appusagestatistics.utils.Constants;
 
 /**
  * Created by j on 4/7/17.
@@ -28,19 +25,22 @@ public class FormatCustomUsageEvents {
         long todayMillis = calendar.getTimeInMillis();
         List<CustomUsageEvents> copy = new ArrayList<>();
         for (CustomUsageEvents event : events)
-            if (event.timestamp >= todayMillis)
+            if (event.timestamp >= todayMillis) {
                 copy.add(event);
+            }
         Log.i("GAAH", "removeOld: Original size " + events.size());
         Log.i("GAAH", "removeOld: Copy size " + copy.size());
         return copy;
     }
 
+    /*
+    * Merges a background event and a foreground event of the same package to a CustomUsageEvents
+    * Merging only happens if a FG immediately follows a BG
+    */
     public static List<DisplayUsageEvents> mergeBgFg(List<CustomUsageEvents> events) {
         List<DisplayUsageEvents> copy = new ArrayList<>();
-//        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        //events = removeNulls(events);
-
         boolean skip = false;
+
         for (int i = 0; i < events.size() - 1; i++) {
             if (skip) {
                 skip = false;
@@ -50,8 +50,6 @@ public class FormatCustomUsageEvents {
             CustomUsageEvents thisEvent = events.get(i);
             CustomUsageEvents nextEvent = events.get(i + 1);
 
-//            Log.i("GAAH3", "mergeBgFg: this name " + thisEvent.packageName + " this time " + sdf.format(new Date(thisEvent.timestamp)) + " " + thisEvent.eventType);
-//            Log.i("GAAH3", "mergeBgFg: next name " + nextEvent.packageName + "next time " + sdf.format(new Date(nextEvent.timestamp)) + " " + nextEvent.eventType);
             if (thisEvent.packageName.equals(nextEvent.packageName)) {
                 if (Constants.BG.equals(thisEvent.eventType)
                         && Constants.FG.equals(nextEvent.eventType)) {
@@ -60,16 +58,9 @@ public class FormatCustomUsageEvents {
                     skip = true;
                 }
             } else
-                    copy.add(new DisplayUsageEvents(thisEvent.packageName, nextEvent.timestamp, true));
-
-
-//            if (copy.size() > 0)
-//                Log.i("GAAH3", "mergeBgFg: copy name " + copy.get(copy.size() - 1).packageName
-//                        + " copy start time " + sdf.format(new Date(copy.get(copy.size() - 1).startTime))
-//                        + " copy end time " + sdf.format(new Date(copy.get(copy.size() - 1).endTime)));
+                copy.add(new DisplayUsageEvents(thisEvent.packageName, nextEvent.timestamp, true));
         }
         Log.i("GAAH2", "mergeBgFg: Original Size/2 " + events.size() / 2);
-        Log.i("GAAH2", "mergeBgFg: new size " + copy.size());
         return removeDuplicateOngoing(copy);
     }
 
@@ -81,7 +72,39 @@ public class FormatCustomUsageEvents {
                 continue;
             copy.add(events.get(i));
         }
-
         return copy;
+    }
+
+
+    /*
+    * Merges items from the same package name together if the events are less than 5 seconds apart
+    */
+    public static List<DisplayUsageEvents> mergeSame(List<DisplayUsageEvents> events) {
+        final long MIN_TIME_DIFFERENCE = 1000 * 5;
+
+        DisplayUsageEvents previous = null;
+        Iterator<DisplayUsageEvents> iterator = events.iterator();
+        while (iterator.hasNext()) {
+            if (previous == null) {
+                previous = iterator.next();
+                continue;
+            }
+
+            DisplayUsageEvents thisEvent = iterator.next();
+
+            // THIS WILL MISS THE LAST EVENT
+            if (previous.packageName.equals(thisEvent.packageName)) {
+                if (previous.startTime - thisEvent.endTime > MIN_TIME_DIFFERENCE) {
+                    previous = thisEvent;
+                } else {
+                    previous.startTime = thisEvent.startTime;
+                    iterator.remove();
+                }
+            } else
+                previous = thisEvent;
+
+        }
+        Log.i("GAAH2", "iteratorMergeSame: new Size " + events.size());
+        return events;
     }
 }
