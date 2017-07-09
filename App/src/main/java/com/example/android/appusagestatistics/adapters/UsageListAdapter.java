@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -40,8 +41,8 @@ import java.util.TimeZone;
 public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.ViewHolder> {
 
     private List<DisplayUsageEvents> mCustomUsageStatsList = new ArrayList<>();
-    private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a");
-    private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss");
+    private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a", Locale.getDefault());
+    private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
     private Context mContext;
 
     /**

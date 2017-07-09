@@ -6,7 +6,6 @@ import android.util.Log;
 
 import com.example.android.appusagestatistics.models.CustomUsageEvents;
 import com.example.android.appusagestatistics.models.DisplayUsageEvents;
-import com.example.android.appusagestatistics.utils.comparators.TimestampComparator;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,7 +36,7 @@ public class FormatCustomUsageEvents {
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         UsageEvents queryUsageEvents = mUsageStatsManager.queryEvents(cal.getTimeInMillis(),
-                        System.currentTimeMillis());
+                System.currentTimeMillis());
 
         if (!queryUsageEvents.hasNextEvent())
             return null;
@@ -134,7 +133,9 @@ public class FormatCustomUsageEvents {
         if (usageEvents == null)
             return null;
 
-        Collections.sort(usageEvents, new TimestampComparator());
+        Collections.sort(usageEvents, (left, right) ->
+                Long.compare(right.timestamp, left.timestamp));
+
         List<DisplayUsageEvents> displayUsageEventsList = mergeBgFg(usageEvents);
         displayUsageEventsList = mergeSame(displayUsageEventsList);
         return displayUsageEventsList;

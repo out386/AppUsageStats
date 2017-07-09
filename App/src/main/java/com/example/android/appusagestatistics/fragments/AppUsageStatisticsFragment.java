@@ -42,23 +42,16 @@ import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 
 import java.util.List;
 
-/**
- * Fragment that demonstrates how to use App Usage Statistics API.
- */
 public class AppUsageStatisticsFragment extends Fragment {
 
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
 
-    //VisibleForTesting for variables below
-    UsageStatsManager mUsageStatsManager;
-    UsageListAdapter mUsageListAdapter;
-    RecyclerView mRecyclerView;
-    RecyclerView.LayoutManager mLayoutManager;
-    Button mOpenUsageSettingButton;
-
-    public AppUsageStatisticsFragment() {
-        // Required empty public constructor
-    }
+    private UsageStatsManager mUsageStatsManager;
+    private UsageListAdapter mUsageListAdapter;
+    private RecyclerView mRecyclerView;
+    private Button mOpenUsageSettingButton;
+    private CheckBox mHideLauncherCheckBox;
+    private List<DisplayUsageEvents> events;
 
     /**
      * Use this factory method to create a new instance of
@@ -94,7 +87,6 @@ public class AppUsageStatisticsFragment extends Fragment {
 
         mUsageListAdapter = new UsageListAdapter(getContext());
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview_app_usage);
-        mLayoutManager = mRecyclerView.getLayoutManager();
         mRecyclerView.scrollToPosition(0);
         mRecyclerView.setAdapter(mUsageListAdapter);
         mOpenUsageSettingButton = (Button) rootView.findViewById(R.id.button_open_usage_setting);
@@ -113,13 +105,7 @@ public class AppUsageStatisticsFragment extends Fragment {
                     getString(R.string.explanation_access_to_appusage_is_not_enabled),
                     Toast.LENGTH_LONG).show();
             mOpenUsageSettingButton.setVisibility(View.VISIBLE);
-            mOpenUsageSettingButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
-                }
-            });
-            return;
+            mOpenUsageSettingButton.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
         } else {
             mOpenUsageSettingButton.setVisibility(View.GONE);
             updateAppsList(events);
