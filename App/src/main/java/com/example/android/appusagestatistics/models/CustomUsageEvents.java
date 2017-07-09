@@ -23,8 +23,6 @@ import android.graphics.drawable.Drawable;
  */
 public class CustomUsageEvents {
     public String packageName;
-    public String appName;
-    public Drawable appIcon;
     public long timestamp;
     public String eventType;
 

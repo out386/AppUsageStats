@@ -26,60 +26,37 @@ public class FormatCustomUsageEvents {
      *
      * @return A list of {@link android.app.usage.UsageStats}.
      */
-    private static List<UsageEvents.Event> getUsageEvents(UsageStatsManager mUsageStatsManager) {
+    private static List<CustomUsageEvents> getUsageEvents(UsageStatsManager mUsageStatsManager) {
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
+        List<CustomUsageEvents> copy = new ArrayList<>();
+        UsageEvents.Event event = new UsageEvents.Event();
+        String eventType;
 
-        UsageEvents queryUsageEvents = mUsageStatsManager
-                .queryEvents(cal.getTimeInMillis(),
+        cal.set(Calendar.HOUR, 0);
+        cal.set(Calendar.AM_PM, Calendar.AM);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        UsageEvents queryUsageEvents = mUsageStatsManager.queryEvents(cal.getTimeInMillis(),
                         System.currentTimeMillis());
 
         if (!queryUsageEvents.hasNextEvent())
             return null;
 
-        UsageEvents.Event event = new UsageEvents.Event();
-        List<UsageEvents.Event> events = new ArrayList<>();
         while (queryUsageEvents.getNextEvent(event)) {
-            events.add(event);
+            if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                eventType = Constants.FG;
+                copy.add(new CustomUsageEvents(event.getPackageName(),
+                        eventType, event.getTimeStamp()));
+            } else if (event.getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND) {
+                eventType = Constants.BG;
+                copy.add(new CustomUsageEvents(event.getPackageName(),
+                        eventType, event.getTimeStamp()));
+            }
+
             event = new UsageEvents.Event();
         }
 
-        Log.i("GAAH", "getUsageEvents: size " + events.size());
-        return events;
-    }
-
-    private static List<CustomUsageEvents> getCustomUsage(List<UsageEvents.Event> usageStatsList) {
-        List<CustomUsageEvents> copy = new ArrayList<>();
-        for (int i = 0; i < usageStatsList.size(); i++) {
-            String eventType;
-
-            if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                eventType = Constants.FG;
-                copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
-                        eventType, usageStatsList.get(i).getTimeStamp()));
-            } else if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND) {
-                eventType = Constants.BG;
-                copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
-                        eventType, usageStatsList.get(i).getTimeStamp()));
-            }
-        }
-        return copy;
-    }
-
-    private static List<CustomUsageEvents> removeOld(List<CustomUsageEvents> events) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR, 0);
-        calendar.set(Calendar.AM_PM, Calendar.AM);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        long todayMillis = calendar.getTimeInMillis();
-        List<CustomUsageEvents> copy = new ArrayList<>();
-        for (CustomUsageEvents event : events)
-            if (event.timestamp >= todayMillis) {
-                copy.add(event);
-            }
-        Log.i("GAAH", "removeOld: Original size " + events.size());
-        Log.i("GAAH", "removeOld: Copy size " + copy.size());
+        Log.i("GAAH", "getUsageEvents: size " + copy.size());
         return copy;
     }
 
@@ -107,27 +84,18 @@ public class FormatCustomUsageEvents {
                             nextEvent.timestamp, thisEvent.timestamp));
                     skip = true;
                 }
-            } else
+            } else if (i == 0) {
+                // Making sure that Ongoing events in the middle of the list get dropped
                 copy.add(new DisplayUsageEvents(thisEvent.packageName, nextEvent.timestamp, true));
+            }
         }
         Log.i("GAAH2", "mergeBgFg: Original Size/2 " + events.size() / 2);
-        return removeDuplicateOngoing(copy);
-    }
-
-    private static List<DisplayUsageEvents> removeDuplicateOngoing(List<DisplayUsageEvents> events) {
-        // We want to filter out "ongoing"s from the middle of the list, as those are mistakes caused by getUsageEvents
-        List<DisplayUsageEvents> copy = new ArrayList<>();
-        for (int i = 0; i < events.size(); i++) {
-            if (events.get(i).ongoing && i > 0)
-                continue;
-            copy.add(events.get(i));
-        }
         return copy;
     }
 
 
     /*
-    * Merges items from the same package name together if the events are less than 5 seconds apart
+    * Merges items from the same package name together if the events are less than MIN_TIME_DIFFERENCE ms apart
     */
     private static List<DisplayUsageEvents> mergeSame(List<DisplayUsageEvents> events) {
         final long MIN_TIME_DIFFERENCE = 1000 * 5;
@@ -154,19 +122,17 @@ public class FormatCustomUsageEvents {
                 previous = thisEvent;
 
         }
-        Log.i("GAAH2", "iteratorMergeSame: new Size " + events.size());
+        Log.i("GAAH2", "mergeSame: new Size " + events.size());
         return events;
     }
 
     public static List<DisplayUsageEvents> getDisplayUsageEventsList(UsageStatsManager mUsageStatsManager) {
-        List<UsageEvents.Event> usageStatsList = getUsageEvents(mUsageStatsManager);
-        if (usageStatsList == null)
+        List<CustomUsageEvents> usageEvents = getUsageEvents(mUsageStatsManager);
+        if (usageEvents == null)
             return null;
-        List<CustomUsageEvents> copy = getCustomUsage(usageStatsList);
 
-        Collections.sort(copy, new TimestampComparator());
-        copy = FormatCustomUsageEvents.removeOld(copy);
-        List<DisplayUsageEvents> displayUsageEventsList = mergeBgFg(copy);
+        Collections.sort(usageEvents, new TimestampComparator());
+        List<DisplayUsageEvents> displayUsageEventsList = mergeBgFg(usageEvents);
         displayUsageEventsList = mergeSame(displayUsageEventsList);
         return displayUsageEventsList;
     }
