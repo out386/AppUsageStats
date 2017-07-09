@@ -37,6 +37,7 @@ import android.widget.Toast;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
 import com.example.android.appusagestatistics.models.DisplayUsageEvent;
+import com.example.android.appusagestatistics.utils.Constants;
 import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 
 import java.util.List;
@@ -49,7 +50,7 @@ public class AppUsageStatisticsFragment extends Fragment {
     private UsageListAdapter mUsageListAdapter;
     private RecyclerView mRecyclerView;
     private Button mOpenUsageSettingButton;
-    private List<DisplayUsageEvent> events;
+    private String [] excludePackages;
 
     /**
      * Use this factory method to create a new instance of
@@ -71,6 +72,8 @@ public class AppUsageStatisticsFragment extends Fragment {
         else
             mUsageStatsManager = (UsageStatsManager) getActivity()
                     .getSystemService("usagestats");
+        excludePackages = Constants.excludePackages;
+        excludePackages[excludePackages.length - 1] = findLauncher();
     }
 
     @Override
@@ -96,8 +99,8 @@ public class AppUsageStatisticsFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-            events = FormatCustomUsageEvents
-                    .getDisplayUsageEventsList(mUsageStatsManager);
+        List<DisplayUsageEvent> events = FormatCustomUsageEvents
+                .getDisplayUsageEventsList(mUsageStatsManager, excludePackages);
         if (events == null) {
             Log.i(TAG, "The user may not have allowed access to apps usage.");
             Toast.makeText(getActivity(),
@@ -148,5 +151,13 @@ public class AppUsageStatisticsFragment extends Fragment {
             return packageManager.getApplicationLabel(applicationInfo).toString();
         else
             return packageName;
+    }
+
+    private String findLauncher() {
+        PackageManager localPackageManager = getContext().getPackageManager();
+        Intent intent = new Intent("android.intent.action.MAIN");
+        intent.addCategory("android.intent.category.HOME");
+        return localPackageManager.resolveActivity(intent,
+                PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
     }
 }

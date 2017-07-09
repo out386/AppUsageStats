@@ -49,7 +49,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
     static class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView mPackageName;
+        private final TextView mAppName;
         private final TextView mStartTime;
         private final TextView mEndTime;
         private final TextView mTotalTime;
@@ -58,7 +58,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
 
         ViewHolder(View v) {
             super(v);
-            mPackageName = (TextView) v.findViewById(R.id.textview_package_name);
+            mAppName = (TextView) v.findViewById(R.id.textview_package_name);
             mStartTime = (TextView) v.findViewById(R.id.start_time);
             mEndTime = (TextView) v.findViewById(R.id.end_time);
             mEndTimeLabel = (TextView) v.findViewById(R.id.end_time_label);
@@ -81,7 +81,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
-        viewHolder.mPackageName.setText(
+        viewHolder.mAppName.setText(
                 mCustomUsageStatsList.get(position).appName);
 
         // Rounding off to the nearest second, as we aren't showing milliseconds

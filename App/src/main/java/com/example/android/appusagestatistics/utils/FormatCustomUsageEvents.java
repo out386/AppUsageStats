@@ -25,7 +25,8 @@ public class FormatCustomUsageEvents {
      *
      * @return A list of {@link android.app.usage.UsageStats}.
      */
-    private static List<CustomUsageEvents> getUsageEvents(UsageStatsManager mUsageStatsManager) {
+    private static List<CustomUsageEvents> getUsageEvents(UsageStatsManager mUsageStatsManager,
+                                                          String[] excludePackages) {
         Calendar cal = Calendar.getInstance();
         List<CustomUsageEvents> copy = new ArrayList<>();
         UsageEvents.Event event = new UsageEvents.Event();
@@ -41,10 +42,11 @@ public class FormatCustomUsageEvents {
         if (!queryUsageEvents.hasNextEvent())
             return null;
 
+        outer:
         while (queryUsageEvents.getNextEvent(event)) {
-            if (Constants.SYSTEM_UI_PACKAGE.equals(event.getPackageName()))
-                continue;
-            
+            for (String excludePackage : excludePackages)
+                if (excludePackage.equals(event.getPackageName()))
+                    continue outer;
             if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
                 eventType = Constants.FG;
                 copy.add(new CustomUsageEvents(event.getPackageName(),
@@ -79,19 +81,24 @@ public class FormatCustomUsageEvents {
             CustomUsageEvents thisEvent = events.get(i);
             CustomUsageEvents nextEvent = events.get(i + 1);
 
+            Log.i("GAAH", "mergeBgFg: this : " + thisEvent.packageName + ", event " + thisEvent.eventType);
+            Log.i("GAAH", "mergeBgFg: next : " + nextEvent.packageName + ", event " + nextEvent.eventType);
             if (thisEvent.packageName.equals(nextEvent.packageName)) {
                 if (Constants.BG.equals(thisEvent.eventType)
                         && Constants.FG.equals(nextEvent.eventType)) {
                     copy.add(new DisplayUsageEvent(thisEvent.packageName,
                             nextEvent.timestamp, thisEvent.timestamp));
                     skip = true;
+                } else if (i == 0) {
+                    // Making sure that Ongoing events in the middle of the list get dropped
+                    copy.add(new DisplayUsageEvent(thisEvent.packageName, nextEvent.timestamp, true));
                 }
             } else if (i == 0) {
                 // Making sure that Ongoing events in the middle of the list get dropped
                 copy.add(new DisplayUsageEvent(thisEvent.packageName, nextEvent.timestamp, true));
             }
         }
-        Log.i("GAAH2", "mergeBgFg: Original Size/2 " + events.size() / 2);
+        Log.i("GAAH2", "mergeBgFg: Size " + copy.size());
         return copy;
     }
 
@@ -128,8 +135,9 @@ public class FormatCustomUsageEvents {
         return events;
     }
 
-    public static List<DisplayUsageEvent> getDisplayUsageEventsList(UsageStatsManager mUsageStatsManager) {
-        List<CustomUsageEvents> usageEvents = getUsageEvents(mUsageStatsManager);
+    public static List<DisplayUsageEvent> getDisplayUsageEventsList(UsageStatsManager mUsageStatsManager,
+                                                                    String[] excludePackages) {
+        List<CustomUsageEvents> usageEvents = getUsageEvents(mUsageStatsManager, excludePackages);
         if (usageEvents == null)
             return null;
 
