@@ -43,6 +43,9 @@ public class FormatCustomUsageEvents {
             return null;
 
         while (queryUsageEvents.getNextEvent(event)) {
+            if (Constants.SYSTEM_UI_PACKAGE.equals(event.getPackageName()))
+                continue;
+            
             if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
                 eventType = Constants.FG;
                 copy.add(new CustomUsageEvents(event.getPackageName(),
