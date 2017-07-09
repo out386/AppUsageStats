@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
@@ -34,17 +35,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.example.android.appusagestatistics.models.DisplayUsageEvents;
-import com.example.android.appusagestatistics.utils.Constants;
-import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
-import com.example.android.appusagestatistics.utils.comparators.TimestampComparator;
-import com.example.android.appusagestatistics.models.CustomUsageEvents;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
+import com.example.android.appusagestatistics.models.DisplayUsageEvents;
+import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 
 import java.util.List;
 
@@ -62,6 +56,10 @@ public class AppUsageStatisticsFragment extends Fragment {
     RecyclerView.LayoutManager mLayoutManager;
     Button mOpenUsageSettingButton;
 
+    public AppUsageStatisticsFragment() {
+        // Required empty public constructor
+    }
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -69,20 +67,19 @@ public class AppUsageStatisticsFragment extends Fragment {
      * @return A new instance of fragment {@link AppUsageStatisticsFragment}.
      */
     public static AppUsageStatisticsFragment newInstance() {
-        AppUsageStatisticsFragment fragment = new AppUsageStatisticsFragment();
-        return fragment;
-    }
-
-    public AppUsageStatisticsFragment() {
-        // Required empty public constructor
+        return new AppUsageStatisticsFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mUsageStatsManager = (UsageStatsManager) getActivity()
-                .getSystemService(Context.USAGE_STATS_SERVICE);
+        if (Build.VERSION.SDK_INT > 21)
+            mUsageStatsManager = (UsageStatsManager) getActivity()
+                    .getSystemService(Context.USAGE_STATS_SERVICE);
+        else
+            mUsageStatsManager = (UsageStatsManager) getActivity()
+                    .getSystemService("usagestats");
     }
 
     @Override
@@ -108,48 +105,10 @@ public class AppUsageStatisticsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        List<UsageEvents.Event> usageStatsList =
-                getUsageEvents();
 
-        List<CustomUsageEvents> copy = new ArrayList<>();
-        for (int i = 0; i < usageStatsList.size(); i++) {
-            String eventType;
-
-            if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                eventType = Constants.FG;
-                copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
-                        eventType, usageStatsList.get(i).getTimeStamp()));
-            }
-            else if (usageStatsList.get(i).getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND) {
-                eventType = Constants.BG;
-                copy.add(new CustomUsageEvents(usageStatsList.get(i).getPackageName(),
-                        eventType, usageStatsList.get(i).getTimeStamp()));
-            }
-        }
-
-        Collections.sort(copy, new TimestampComparator());
-        copy = FormatCustomUsageEvents.removeOld(copy);
-        List<DisplayUsageEvents> displayUsageEventsList = FormatCustomUsageEvents.mergeBgFg(copy);
-        displayUsageEventsList = FormatCustomUsageEvents.mergeSame(displayUsageEventsList);
-
-        updateAppsList(displayUsageEventsList);
-    }
-
-    /**
-     * Returns the {@link #mRecyclerView} including the time span specified by the
-     * intervalType argument.
-     * @return A list of {@link android.app.usage.UsageStats}.
-     */
-    public List<UsageEvents.Event> getUsageEvents() {
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-
-        UsageEvents queryUsageEvents = mUsageStatsManager
-                .queryEvents(cal.getTimeInMillis(),
-                        System.currentTimeMillis());
-
-        if (!queryUsageEvents.hasNextEvent()) {
-            Log.i(TAG, "The user may not allow the access to apps usage. ");
+        List<DisplayUsageEvents> events = FormatCustomUsageEvents.getDisplayUsageEventsList(mUsageStatsManager);
+        if (events == null) {
+            Log.i(TAG, "The user may not have allowed access to apps usage.");
             Toast.makeText(getActivity(),
                     getString(R.string.explanation_access_to_appusage_is_not_enabled),
                     Toast.LENGTH_LONG).show();
@@ -160,17 +119,13 @@ public class AppUsageStatisticsFragment extends Fragment {
                     startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
                 }
             });
+            return;
+        } else {
+            mOpenUsageSettingButton.setVisibility(View.GONE);
+            updateAppsList(events);
         }
-
-        UsageEvents.Event event = new UsageEvents.Event();
-        List<UsageEvents.Event> events = new ArrayList<>();
-        while (queryUsageEvents.getNextEvent(event)) {
-            events.add(event);
-            event = new UsageEvents.Event();
-        }
-
-        return events;
     }
+
 
     /**
      * Updates the {@link #mRecyclerView} with the list of {@link UsageStats} passed as an argument.
