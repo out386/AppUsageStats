@@ -5,7 +5,7 @@ import android.app.usage.UsageStatsManager;
 import android.util.Log;
 
 import com.example.android.appusagestatistics.models.CustomUsageEvents;
-import com.example.android.appusagestatistics.models.DisplayUsageEvents;
+import com.example.android.appusagestatistics.models.DisplayUsageEvent;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -66,8 +66,8 @@ public class FormatCustomUsageEvents {
     * Merges a background event and a foreground event of the same package to a CustomUsageEvents
     * Merging only happens if a FG immediately follows a BG
     */
-    private static List<DisplayUsageEvents> mergeBgFg(List<CustomUsageEvents> events) {
-        List<DisplayUsageEvents> copy = new ArrayList<>();
+    private static List<DisplayUsageEvent> mergeBgFg(List<CustomUsageEvents> events) {
+        List<DisplayUsageEvent> copy = new ArrayList<>();
         boolean skip = false;
 
         for (int i = 0; i < events.size() - 1; i++) {
@@ -82,13 +82,13 @@ public class FormatCustomUsageEvents {
             if (thisEvent.packageName.equals(nextEvent.packageName)) {
                 if (Constants.BG.equals(thisEvent.eventType)
                         && Constants.FG.equals(nextEvent.eventType)) {
-                    copy.add(new DisplayUsageEvents(thisEvent.packageName,
+                    copy.add(new DisplayUsageEvent(thisEvent.packageName,
                             nextEvent.timestamp, thisEvent.timestamp));
                     skip = true;
                 }
             } else if (i == 0) {
                 // Making sure that Ongoing events in the middle of the list get dropped
-                copy.add(new DisplayUsageEvents(thisEvent.packageName, nextEvent.timestamp, true));
+                copy.add(new DisplayUsageEvent(thisEvent.packageName, nextEvent.timestamp, true));
             }
         }
         Log.i("GAAH2", "mergeBgFg: Original Size/2 " + events.size() / 2);
@@ -99,18 +99,18 @@ public class FormatCustomUsageEvents {
     /*
     * Merges items from the same package name together if the events are less than MIN_TIME_DIFFERENCE ms apart
     */
-    private static List<DisplayUsageEvents> mergeSame(List<DisplayUsageEvents> events) {
+    private static List<DisplayUsageEvent> mergeSame(List<DisplayUsageEvent> events) {
         final long MIN_TIME_DIFFERENCE = 1000 * 5;
 
-        DisplayUsageEvents previous = null;
-        Iterator<DisplayUsageEvents> iterator = events.iterator();
+        DisplayUsageEvent previous = null;
+        Iterator<DisplayUsageEvent> iterator = events.iterator();
         while (iterator.hasNext()) {
             if (previous == null) {
                 previous = iterator.next();
                 continue;
             }
 
-            DisplayUsageEvents thisEvent = iterator.next();
+            DisplayUsageEvent thisEvent = iterator.next();
 
             // THIS WILL MISS THE LAST EVENT
             if (previous.packageName.equals(thisEvent.packageName)) {
@@ -128,7 +128,7 @@ public class FormatCustomUsageEvents {
         return events;
     }
 
-    public static List<DisplayUsageEvents> getDisplayUsageEventsList(UsageStatsManager mUsageStatsManager) {
+    public static List<DisplayUsageEvent> getDisplayUsageEventsList(UsageStatsManager mUsageStatsManager) {
         List<CustomUsageEvents> usageEvents = getUsageEvents(mUsageStatsManager);
         if (usageEvents == null)
             return null;
@@ -136,8 +136,8 @@ public class FormatCustomUsageEvents {
         Collections.sort(usageEvents, (left, right) ->
                 Long.compare(right.timestamp, left.timestamp));
 
-        List<DisplayUsageEvents> displayUsageEventsList = mergeBgFg(usageEvents);
-        displayUsageEventsList = mergeSame(displayUsageEventsList);
-        return displayUsageEventsList;
+        List<DisplayUsageEvent> displayUsageEventList = mergeBgFg(usageEvents);
+        displayUsageEventList = mergeSame(displayUsageEventList);
+        return displayUsageEventList;
     }
 }

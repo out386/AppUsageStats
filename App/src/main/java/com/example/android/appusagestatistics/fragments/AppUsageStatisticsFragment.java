@@ -16,7 +16,6 @@
 
 package com.example.android.appusagestatistics.fragments;
 
-import android.app.usage.UsageEvents;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
@@ -37,7 +36,7 @@ import android.widget.Toast;
 
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
-import com.example.android.appusagestatistics.models.DisplayUsageEvents;
+import com.example.android.appusagestatistics.models.DisplayUsageEvent;
 import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 
 import java.util.List;
@@ -50,8 +49,7 @@ public class AppUsageStatisticsFragment extends Fragment {
     private UsageListAdapter mUsageListAdapter;
     private RecyclerView mRecyclerView;
     private Button mOpenUsageSettingButton;
-    private CheckBox mHideLauncherCheckBox;
-    private List<DisplayUsageEvents> events;
+    private List<DisplayUsageEvent> events;
 
     /**
      * Use this factory method to create a new instance of
@@ -98,7 +96,8 @@ public class AppUsageStatisticsFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        List<DisplayUsageEvents> events = FormatCustomUsageEvents.getDisplayUsageEventsList(mUsageStatsManager);
+            events = FormatCustomUsageEvents
+                    .getDisplayUsageEventsList(mUsageStatsManager);
         if (events == null) {
             Log.i(TAG, "The user may not have allowed access to apps usage.");
             Toast.makeText(getActivity(),
@@ -116,22 +115,22 @@ public class AppUsageStatisticsFragment extends Fragment {
     /**
      * Updates the {@link #mRecyclerView} with the list of {@link UsageStats} passed as an argument.
      *
-     * @param usageStatsList A list of {@link UsageStats} from which update the
+     * @param displayUsageEvents A list of {@link UsageStats} from which update the
      *                       {@link #mRecyclerView}.
      */
     //VisibleForTesting
-    void updateAppsList(List<DisplayUsageEvents> usageStatsList) {
-        for (int i = 0; i < usageStatsList.size(); i++) {
+    void updateAppsList(List<DisplayUsageEvent> displayUsageEvents) {
+        for (int i = 0; i < displayUsageEvents.size(); i++) {
             try {
-                usageStatsList.get(i).appIcon = getActivity().getPackageManager()
-                        .getApplicationIcon(usageStatsList.get(i).packageName);
-                usageStatsList.get(i).appName = getAppName(usageStatsList.get(i).packageName);
+                displayUsageEvents.get(i).appIcon = getActivity().getPackageManager()
+                        .getApplicationIcon(displayUsageEvents.get(i).packageName);
+                displayUsageEvents.get(i).appName = getAppName(displayUsageEvents.get(i).packageName);
             } catch (PackageManager.NameNotFoundException e) {
-                usageStatsList.get(i).appIcon = getActivity()
+                displayUsageEvents.get(i).appIcon = getActivity()
                         .getDrawable(R.drawable.ic_default_app_launcher);
             }
         }
-        mUsageListAdapter.setCustomUsageStatsList(usageStatsList);
+        mUsageListAdapter.setCustomUsageStatsList(displayUsageEvents);
         mUsageListAdapter.notifyDataSetChanged();
         mRecyclerView.scrollToPosition(0);
     }

@@ -25,7 +25,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.appusagestatistics.R;
-import com.example.android.appusagestatistics.models.DisplayUsageEvents;
+import com.example.android.appusagestatistics.models.DisplayUsageEvent;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -40,7 +40,7 @@ import java.util.TimeZone;
  */
 public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.ViewHolder> {
 
-    private List<DisplayUsageEvents> mCustomUsageStatsList = new ArrayList<>();
+    private List<DisplayUsageEvent> mCustomUsageStatsList = new ArrayList<>();
     private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a", Locale.getDefault());
     private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
     private Context mContext;
@@ -110,7 +110,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         return mCustomUsageStatsList.size();
     }
 
-    public void setCustomUsageStatsList(List<DisplayUsageEvents> customUsageStats) {
+    public void setCustomUsageStatsList(List<DisplayUsageEvent> customUsageStats) {
         mCustomUsageStatsList = customUsageStats;
     }
 }
