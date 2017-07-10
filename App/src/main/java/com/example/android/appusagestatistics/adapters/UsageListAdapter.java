@@ -16,6 +16,7 @@
 
 package com.example.android.appusagestatistics.adapters;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -25,7 +26,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
 import com.example.android.appusagestatistics.models.DisplayUsageEvent;
+import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -48,9 +51,19 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
     private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
     private Context mContext;
 
-    public UsageListAdapter(Context context) {
-        mContext = context;
+    public UsageListAdapter(AppUsageStatisticsFragment fragment) {
+        mContext = fragment.getContext();
         mDateFormatTotal.setTimeZone(TimeZone.getTimeZone("UTC"));
+        FormatCustomUsageEvents formatCustomUsageEvents = ViewModelProviders
+                .of(fragment)
+                .get(FormatCustomUsageEvents.class);
+
+        formatCustomUsageEvents
+                .getDisplayUsageEventsList()
+                .observe(fragment, events -> {
+                    mCustomUsageStatsList = events;
+                    notifyDataSetChanged();
+                });
     }
 
     @Override
@@ -89,10 +102,6 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
     @Override
     public int getItemCount() {
         return mCustomUsageStatsList.size();
-    }
-
-    public void setCustomUsageStatsList(List<DisplayUsageEvent> customUsageStats) {
-        mCustomUsageStatsList = customUsageStats;
     }
 
     /**

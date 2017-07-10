@@ -1,9 +1,16 @@
 package com.example.android.appusagestatistics.utils;
 
+import android.app.Application;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
+import android.arch.lifecycle.AndroidViewModel;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MutableLiveData;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
+import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.models.CustomUsageEvents;
 import com.example.android.appusagestatistics.models.DisplayUsageEvent;
 
@@ -17,7 +24,13 @@ import java.util.List;
  * Created by j on 4/7/17.
  */
 
-public class FormatCustomUsageEvents {
+public class FormatCustomUsageEvents extends AndroidViewModel {
+
+    private MutableLiveData<List<DisplayUsageEvent>> displayLiveData = new MutableLiveData<>();
+
+    public FormatCustomUsageEvents(Application application) {
+        super(application);
+    }
 
     /**
      * Returns the list including the time span specified by the
@@ -25,8 +38,8 @@ public class FormatCustomUsageEvents {
      *
      * @return A list of {@link android.app.usage.UsageStats}.
      */
-    private static List<CustomUsageEvents> getUsageEvents(UsageStatsManager mUsageStatsManager,
-                                                          String[] excludePackages) {
+    private List<CustomUsageEvents> getUsageEvents(UsageStatsManager mUsageStatsManager,
+                                                   String[] excludePackages) {
         Calendar cal = Calendar.getInstance();
         List<CustomUsageEvents> copy = new ArrayList<>();
         UsageEvents.Event event = new UsageEvents.Event();
@@ -68,7 +81,7 @@ public class FormatCustomUsageEvents {
     * Merges a background event and a foreground event of the same package to a CustomUsageEvents
     * Merging only happens if a FG immediately follows a BG
     */
-    private static List<DisplayUsageEvent> mergeBgFg(List<CustomUsageEvents> events) {
+    private void mergeBgFg(List<CustomUsageEvents> events) {
         List<DisplayUsageEvent> copy = new ArrayList<>();
         boolean skip = false;
 
@@ -81,35 +94,47 @@ public class FormatCustomUsageEvents {
             CustomUsageEvents thisEvent = events.get(i);
             CustomUsageEvents nextEvent = events.get(i + 1);
 
-            Log.i("GAAH", "mergeBgFg: this : " + thisEvent.packageName + ", event " + thisEvent.eventType);
-            Log.i("GAAH", "mergeBgFg: next : " + nextEvent.packageName + ", event " + nextEvent.eventType);
             if (thisEvent.packageName.equals(nextEvent.packageName)) {
                 if (Constants.BG.equals(thisEvent.eventType)
                         && Constants.FG.equals(nextEvent.eventType)) {
-                    copy.add(new DisplayUsageEvent(thisEvent.packageName,
-                            nextEvent.timestamp, thisEvent.timestamp));
+
+                    DisplayUsageEvent event = new DisplayUsageEvent(thisEvent.packageName,
+                            nextEvent.timestamp, thisEvent.timestamp);
+                    getIconName(event);
+                    copy.add(event);
                     skip = true;
                 } else if (i == 0) {
                     // Making sure that Ongoing events in the middle of the list get dropped
-                    copy.add(new DisplayUsageEvent(thisEvent.packageName, nextEvent.timestamp, true));
+                    DisplayUsageEvent event = new DisplayUsageEvent(thisEvent.packageName,
+                            nextEvent.timestamp, true);
+                    getIconName(event);
+                    copy.add(event);
                 }
             } else if (i == 0) {
                 // Making sure that Ongoing events in the middle of the list get dropped
-                copy.add(new DisplayUsageEvent(thisEvent.packageName, nextEvent.timestamp, true));
+                DisplayUsageEvent event = new DisplayUsageEvent(thisEvent.packageName,
+                        nextEvent.timestamp, true);
+                getIconName(event);
+                copy.add(event);
             }
         }
         Log.i("GAAH2", "mergeBgFg: Size " + copy.size());
-        return copy;
+        displayLiveData.setValue(copy);
     }
 
 
     /*
     * Merges items from the same package name together if the events are less than MIN_TIME_DIFFERENCE ms apart
     */
-    private static List<DisplayUsageEvent> mergeSame(List<DisplayUsageEvent> events) {
+    private void mergeSame() {
         final long MIN_TIME_DIFFERENCE = 1000 * 5;
 
         DisplayUsageEvent previous = null;
+        List<DisplayUsageEvent> events = displayLiveData.getValue();
+
+        if (events == null)
+            return;
+
         Iterator<DisplayUsageEvent> iterator = events.iterator();
         while (iterator.hasNext()) {
             if (previous == null) {
@@ -132,11 +157,36 @@ public class FormatCustomUsageEvents {
 
         }
         Log.i("GAAH2", "mergeSame: new Size " + events.size());
-        return events;
     }
 
-    public static List<DisplayUsageEvent> getDisplayUsageEventsList(UsageStatsManager mUsageStatsManager,
-                                                                    String[] excludePackages) {
+    private void getIconName(DisplayUsageEvent event) {
+        try {
+            event.appIcon = getApplication().getPackageManager()
+                    .getApplicationIcon(event.packageName);
+            event.appName = getAppName(event.packageName);
+        } catch (PackageManager.NameNotFoundException e) {
+            event.appIcon = getApplication()
+                    .getDrawable(R.drawable.ic_default_app_launcher);
+        }
+    }
+
+    private String getAppName(String packageName) {
+        ApplicationInfo applicationInfo;
+        PackageManager packageManager = getApplication().getPackageManager();
+        try {
+            applicationInfo = packageManager
+                    .getApplicationInfo(packageName, 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            return packageName;
+        }
+        if (applicationInfo != null)
+            return packageManager.getApplicationLabel(applicationInfo).toString();
+        else
+            return packageName;
+    }
+
+    public LiveData<List<DisplayUsageEvent>> setDisplayUsageEventsList(UsageStatsManager mUsageStatsManager,
+                                                                       String[] excludePackages) {
         List<CustomUsageEvents> usageEvents = getUsageEvents(mUsageStatsManager, excludePackages);
         if (usageEvents == null)
             return null;
@@ -144,8 +194,12 @@ public class FormatCustomUsageEvents {
         Collections.sort(usageEvents, (left, right) ->
                 Long.compare(right.timestamp, left.timestamp));
 
-        List<DisplayUsageEvent> displayUsageEventList = mergeBgFg(usageEvents);
-        displayUsageEventList = mergeSame(displayUsageEventList);
-        return displayUsageEventList;
+        mergeBgFg(usageEvents);
+        mergeSame();
+        return displayLiveData;
+    }
+
+    public LiveData<List<DisplayUsageEvent>> getDisplayUsageEventsList() {
+        return displayLiveData;
     }
 }

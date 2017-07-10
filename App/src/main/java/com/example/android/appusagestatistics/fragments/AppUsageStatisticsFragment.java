@@ -18,14 +18,14 @@ package com.example.android.appusagestatistics.fragments;
 
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.arch.lifecycle.LifecycleFragment;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -46,7 +46,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
-public class AppUsageStatisticsFragment extends Fragment {
+public class AppUsageStatisticsFragment extends LifecycleFragment {
 
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
     @BindView(R.id.recyclerview_app_usage)
@@ -55,9 +55,10 @@ public class AppUsageStatisticsFragment extends Fragment {
     protected Button mOpenUsageSettingButton;
     @BindArray(R.array.exclude_packages)
     protected String[] excludePackages;
+
     private UsageStatsManager mUsageStatsManager;
-    private UsageListAdapter mUsageListAdapter;
     private Unbinder unbinder;
+    private FormatCustomUsageEvents formatCustomUsageEvents;
 
     /**
      * Use this factory method to create a new instance of
@@ -100,67 +101,34 @@ public class AppUsageStatisticsFragment extends Fragment {
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
 
-        mUsageListAdapter = new UsageListAdapter(getContext());
+        UsageListAdapter mUsageListAdapter = new UsageListAdapter(this);
         mRecyclerView.scrollToPosition(0);
         mRecyclerView.setAdapter(mUsageListAdapter);
+        formatCustomUsageEvents = ViewModelProviders
+                .of(this)
+                .get(FormatCustomUsageEvents.class);
+
+        formatCustomUsageEvents
+                .getDisplayUsageEventsList()
+                .observe(this, events -> {
+                    if (events == null) {
+                        Log.i(TAG, "The user may not have allowed access to apps usage.");
+                        Toast.makeText(getActivity(),
+                                getString(R.string.explanation_access_to_appusage_is_not_enabled),
+                                Toast.LENGTH_LONG).show();
+                        mOpenUsageSettingButton.setVisibility(View.VISIBLE);
+                        mOpenUsageSettingButton.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
+                    } else {
+                        mOpenUsageSettingButton.setVisibility(View.GONE);
+                    }
+                });
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
-        List<DisplayUsageEvent> events = FormatCustomUsageEvents
-                .getDisplayUsageEventsList(mUsageStatsManager, excludePackages);
-        if (events == null) {
-            Log.i(TAG, "The user may not have allowed access to apps usage.");
-            Toast.makeText(getActivity(),
-                    getString(R.string.explanation_access_to_appusage_is_not_enabled),
-                    Toast.LENGTH_LONG).show();
-            mOpenUsageSettingButton.setVisibility(View.VISIBLE);
-            mOpenUsageSettingButton.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
-        } else {
-            mOpenUsageSettingButton.setVisibility(View.GONE);
-            updateAppsList(events);
-        }
-    }
-
-
-    /**
-     * Updates the {@link #mRecyclerView} with the list of {@link UsageStats} passed as an argument.
-     *
-     * @param displayUsageEvents A list of {@link UsageStats} from which update the
-     *                           {@link #mRecyclerView}.
-     */
-    //VisibleForTesting
-    void updateAppsList(List<DisplayUsageEvent> displayUsageEvents) {
-        for (int i = 0; i < displayUsageEvents.size(); i++) {
-            try {
-                displayUsageEvents.get(i).appIcon = getActivity().getPackageManager()
-                        .getApplicationIcon(displayUsageEvents.get(i).packageName);
-                displayUsageEvents.get(i).appName = getAppName(displayUsageEvents.get(i).packageName);
-            } catch (PackageManager.NameNotFoundException e) {
-                displayUsageEvents.get(i).appIcon = getActivity()
-                        .getDrawable(R.drawable.ic_default_app_launcher);
-            }
-        }
-        mUsageListAdapter.setCustomUsageStatsList(displayUsageEvents);
-        mUsageListAdapter.notifyDataSetChanged();
-        mRecyclerView.scrollToPosition(0);
-    }
-
-    private String getAppName(String packageName) {
-        ApplicationInfo applicationInfo;
-        PackageManager packageManager = getActivity().getPackageManager();
-        try {
-            applicationInfo = packageManager
-                    .getApplicationInfo(packageName, 0);
-        } catch (PackageManager.NameNotFoundException e) {
-            return packageName;
-        }
-        if (applicationInfo != null)
-            return packageManager.getApplicationLabel(applicationInfo).toString();
-        else
-            return packageName;
+        formatCustomUsageEvents
+                .setDisplayUsageEventsList(mUsageStatsManager, excludePackages);
     }
 
     private String findLauncher() {
