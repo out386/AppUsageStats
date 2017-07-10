@@ -37,20 +37,27 @@ import android.widget.Toast;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
 import com.example.android.appusagestatistics.models.DisplayUsageEvent;
-import com.example.android.appusagestatistics.utils.Constants;
 import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 
 import java.util.List;
 
+import butterknife.BindArray;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.Unbinder;
+
 public class AppUsageStatisticsFragment extends Fragment {
 
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
-
+    @BindView(R.id.recyclerview_app_usage)
+    protected RecyclerView mRecyclerView;
+    @BindView(R.id.button_open_usage_setting)
+    protected Button mOpenUsageSettingButton;
+    @BindArray(R.array.exclude_packages)
+    protected String[] excludePackages;
     private UsageStatsManager mUsageStatsManager;
     private UsageListAdapter mUsageListAdapter;
-    private RecyclerView mRecyclerView;
-    private Button mOpenUsageSettingButton;
-    private String [] excludePackages;
+    private Unbinder unbinder;
 
     /**
      * Use this factory method to create a new instance of
@@ -72,14 +79,21 @@ public class AppUsageStatisticsFragment extends Fragment {
         else
             mUsageStatsManager = (UsageStatsManager) getActivity()
                     .getSystemService("usagestats");
-        excludePackages = Constants.excludePackages;
-        excludePackages[excludePackages.length - 1] = findLauncher();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_app_usage_statistics, container, false);
+        View view = inflater.inflate(R.layout.fragment_app_usage_statistics, container, false);
+        unbinder = ButterKnife.bind(this, view);
+        excludePackages[excludePackages.length - 1] = findLauncher();
+        return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        unbinder.unbind();
+        super.onDestroyView();
     }
 
     @Override
@@ -87,12 +101,8 @@ public class AppUsageStatisticsFragment extends Fragment {
         super.onViewCreated(rootView, savedInstanceState);
 
         mUsageListAdapter = new UsageListAdapter(getContext());
-        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview_app_usage);
         mRecyclerView.scrollToPosition(0);
         mRecyclerView.setAdapter(mUsageListAdapter);
-        mOpenUsageSettingButton = (Button) rootView.findViewById(R.id.button_open_usage_setting);
-
-
     }
 
     @Override
@@ -119,7 +129,7 @@ public class AppUsageStatisticsFragment extends Fragment {
      * Updates the {@link #mRecyclerView} with the list of {@link UsageStats} passed as an argument.
      *
      * @param displayUsageEvents A list of {@link UsageStats} from which update the
-     *                       {@link #mRecyclerView}.
+     *                           {@link #mRecyclerView}.
      */
     //VisibleForTesting
     void updateAppsList(List<DisplayUsageEvent> displayUsageEvents) {

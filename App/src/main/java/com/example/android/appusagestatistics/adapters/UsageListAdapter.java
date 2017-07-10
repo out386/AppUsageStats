@@ -35,6 +35,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * Provide views to RecyclerView with the directory entries.
  */
@@ -44,28 +47,6 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
     private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a", Locale.getDefault());
     private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
     private Context mContext;
-
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView mAppName;
-        private final TextView mStartTime;
-        private final TextView mEndTime;
-        private final TextView mTotalTime;
-        private final TextView mEndTimeLabel;
-        private final ImageView mAppIcon;
-
-        ViewHolder(View v) {
-            super(v);
-            mAppName = (TextView) v.findViewById(R.id.textview_package_name);
-            mStartTime = (TextView) v.findViewById(R.id.start_time);
-            mEndTime = (TextView) v.findViewById(R.id.end_time);
-            mEndTimeLabel = (TextView) v.findViewById(R.id.end_time_label);
-            mTotalTime = (TextView) v.findViewById(R.id.total_time);
-            mAppIcon = (ImageView) v.findViewById(R.id.app_icon);
-        }
-    }
 
     public UsageListAdapter(Context context) {
         mContext = context;
@@ -112,5 +93,28 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
 
     public void setCustomUsageStatsList(List<DisplayUsageEvent> customUsageStats) {
         mCustomUsageStatsList = customUsageStats;
+    }
+
+    /**
+     * Provide a reference to the type of views that you are using (custom ViewHolder)
+     */
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        @BindView(R.id.textview_package_name)
+        TextView mAppName;
+        @BindView(R.id.start_time)
+        TextView mStartTime;
+        @BindView(R.id.end_time)
+        TextView mEndTime;
+        @BindView(R.id.total_time)
+        TextView mTotalTime;
+        @BindView(R.id.end_time_label)
+        TextView mEndTimeLabel;
+        @BindView(R.id.app_icon)
+        ImageView mAppIcon;
+
+        ViewHolder(View v) {
+            super(v);
+            ButterKnife.bind(this, v);
+        }
     }
 }

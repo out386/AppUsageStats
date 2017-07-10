@@ -7,6 +7,5 @@ package com.example.android.appusagestatistics.utils;
 public class Constants {
     static final String BG = "Moved to background";
     static final String FG = "Moved to foreground";
-    public static final String [] excludePackages = {"com.android.systemui", "android", ""};
 
 }
