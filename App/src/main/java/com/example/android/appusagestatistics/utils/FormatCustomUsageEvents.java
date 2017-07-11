@@ -84,7 +84,7 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
     * Merges a background event and a foreground event of the same package to a CustomUsageEvents
     * Merging only happens if a FG immediately follows a BG
     */
-    private void mergeBgFg(List<CustomUsageEvents> events) {
+    private List<DisplayEventEntity> mergeBgFg(List<CustomUsageEvents> events) {
         List<DisplayEventEntity> copy = new ArrayList<>();
         boolean skip = false;
 
@@ -122,18 +122,17 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
             }
         }
         Log.i("GAAH2", "mergeBgFg: Size " + copy.size());
-        displayLiveData.setValue(copy);
+        return copy;
     }
 
 
     /*
     * Merges items from the same package name together if the events are less than MIN_TIME_DIFFERENCE ms apart
     */
-    private void mergeSame() {
+    private void mergeSame(List<DisplayEventEntity> events) {
         final long MIN_TIME_DIFFERENCE = 1000 * 5;
 
         DisplayEventEntity previous = null;
-        List<DisplayEventEntity> events = displayLiveData.getValue();
 
         if (events == null)
             return;
@@ -157,7 +156,7 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
                 }
             } else
                 previous = thisEvent;
-
+            displayLiveData.setValue(events);
         }
         Log.i("GAAH2", "mergeSame: new Size " + events.size());
     }
@@ -200,8 +199,8 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
         Collections.sort(usageEvents, (left, right) ->
                 Long.compare(right.timestamp, left.timestamp));
 
-        mergeBgFg(usageEvents);
-        mergeSame();
+        List<DisplayEventEntity> merged = mergeBgFg(usageEvents);
+        mergeSame(merged);
         insertInDb();
         return displayLiveData;
     }
