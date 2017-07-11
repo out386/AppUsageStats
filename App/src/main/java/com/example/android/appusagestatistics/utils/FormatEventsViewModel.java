@@ -6,7 +6,6 @@ import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Transformations;
 import android.arch.persistence.room.Room;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -19,7 +18,6 @@ import com.example.android.appusagestatistics.models.CustomUsageEvents;
 import com.example.android.appusagestatistics.models.DisplayEventEntity;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -30,7 +28,7 @@ import java.util.List;
 
 public class FormatEventsViewModel extends AndroidViewModel {
 
-    private LiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
+    private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
     private Database db;
 
     public FormatEventsViewModel(Application application) {
@@ -183,12 +181,12 @@ public class FormatEventsViewModel extends AndroidViewModel {
     }
 
     public void setDisplayUsageEventsList(UsageStatsManager usageStatsManager,
-                                                                        String[] excludePackages, long startTime, long endTime) {
+                                          String[] excludePackages, long startTime, long endTime) {
 
         if (db == null)
             db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
 
-        AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new  AsyncTask<Void, Void, List<DisplayEventEntity>>() {
+        AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new AsyncTask<Void, Void, List<DisplayEventEntity>>() {
 
             @Override
             protected List<DisplayEventEntity> doInBackground(Void... voids) {
@@ -200,14 +198,13 @@ public class FormatEventsViewModel extends AndroidViewModel {
                 if (eventsInDb == null || eventsInDb.size() == 0) {
                     Log.d("GAAH", "setDisplayUsageEventsList: null");
                 }
-                displayLiveData = findEvents(usageStatsManager, excludePackages, startTime, endTime);
+                findEvents(usageStatsManager, excludePackages, startTime, endTime);
 
                 super.onPostExecute(eventsInDb);
             }
         };
 
         populateList.execute();
-
     }
 
     public LiveData<List<DisplayEventEntity>> getDisplayUsageEventsList() {
@@ -218,11 +215,11 @@ public class FormatEventsViewModel extends AndroidViewModel {
         new Thread(() -> db.dao().insertEvent(events)).start();
     }
 
-    private MutableLiveData<List<DisplayEventEntity>> findEvents(UsageStatsManager usageStatsManager,
-                                                                 String[] excludePackages, long startTime, long endTime) {
+    private void findEvents(UsageStatsManager usageStatsManager,
+                            String[] excludePackages, long startTime, long endTime) {
         List<CustomUsageEvents> usageEvents = getUsageEvents(usageStatsManager, excludePackages, startTime, endTime);
         if (usageEvents == null)
-            return null;
+            return;
 
         Collections.sort(usageEvents, (left, right) ->
                 Long.compare(right.timestamp, left.timestamp));
@@ -230,8 +227,6 @@ public class FormatEventsViewModel extends AndroidViewModel {
         List<DisplayEventEntity> merged = mergeBgFg(usageEvents);
         merged = mergeSame(merged);
         insertInDb(merged);
-        MutableLiveData<List<DisplayEventEntity>> newEvents = new MutableLiveData<>();
-        newEvents.setValue(merged);
-        return newEvents;
+        displayLiveData.setValue(merged);
     }
 }

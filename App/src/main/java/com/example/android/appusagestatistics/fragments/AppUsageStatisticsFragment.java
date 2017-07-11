@@ -35,7 +35,9 @@ import android.widget.Toast;
 
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
-import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
+import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
+
+import java.util.Calendar;
 
 import butterknife.BindArray;
 import butterknife.BindView;
@@ -54,7 +56,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
     private UsageStatsManager mUsageStatsManager;
     private Unbinder unbinder;
-    private FormatCustomUsageEvents formatCustomUsageEvents;
+    private FormatEventsViewModel formatCustomUsageEvents;
 
     /**
      * Use this factory method to create a new instance of
@@ -102,7 +104,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         mRecyclerView.setAdapter(mUsageListAdapter);
         formatCustomUsageEvents = ViewModelProviders
                 .of(this)
-                .get(FormatCustomUsageEvents.class);
+                .get(FormatEventsViewModel.class);
 
         formatCustomUsageEvents
                 .getDisplayUsageEventsList()
@@ -123,8 +125,15 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     @Override
     public void onResume() {
         super.onResume();
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR, 0);
+        cal.set(Calendar.AM_PM, Calendar.AM);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+
         formatCustomUsageEvents
-                .setDisplayUsageEventsList(mUsageStatsManager, excludePackages);
+                .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
+                        cal.getTimeInMillis(), System.currentTimeMillis());
     }
 
     private String findLauncher() {

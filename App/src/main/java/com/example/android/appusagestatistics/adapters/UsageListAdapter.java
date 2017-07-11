@@ -28,7 +28,7 @@ import android.widget.TextView;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
 import com.example.android.appusagestatistics.models.DisplayEventEntity;
-import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
+import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -46,7 +46,7 @@ import butterknife.ButterKnife;
  */
 public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.ViewHolder> {
 
-    private List<DisplayEventEntity> mCustomUsageStatsList = new ArrayList<>();
+    private List<DisplayEventEntity> mCustomUsageStatsList;
     private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a", Locale.getDefault());
     private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
     private Context mContext;
@@ -54,9 +54,9 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
     public UsageListAdapter(AppUsageStatisticsFragment fragment) {
         mContext = fragment.getContext();
         mDateFormatTotal.setTimeZone(TimeZone.getTimeZone("UTC"));
-        FormatCustomUsageEvents formatCustomUsageEvents = ViewModelProviders
+        FormatEventsViewModel formatCustomUsageEvents = ViewModelProviders
                 .of(fragment)
-                .get(FormatCustomUsageEvents.class);
+                .get(FormatEventsViewModel.class);
 
         formatCustomUsageEvents
                 .getDisplayUsageEventsList()
@@ -100,6 +100,8 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
 
     @Override
     public int getItemCount() {
+        if (mCustomUsageStatsList == null)
+            return 0;
         return mCustomUsageStatsList.size();
     }
 
