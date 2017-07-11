@@ -16,7 +16,6 @@
 
 package com.example.android.appusagestatistics.fragments;
 
-import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.LifecycleFragment;
 import android.arch.lifecycle.ViewModelProviders;
@@ -36,10 +35,7 @@ import android.widget.Toast;
 
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
-import com.example.android.appusagestatistics.models.DisplayUsageEvent;
 import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
-
-import java.util.List;
 
 import butterknife.BindArray;
 import butterknife.BindView;

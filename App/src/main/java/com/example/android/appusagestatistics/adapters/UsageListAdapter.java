@@ -27,7 +27,7 @@ import android.widget.TextView;
 
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
-import com.example.android.appusagestatistics.models.DisplayUsageEvent;
+import com.example.android.appusagestatistics.models.DisplayEventEntity;
 import com.example.android.appusagestatistics.utils.FormatCustomUsageEvents;
 
 import java.text.DateFormat;
@@ -46,7 +46,7 @@ import butterknife.ButterKnife;
  */
 public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.ViewHolder> {
 
-    private List<DisplayUsageEvent> mCustomUsageStatsList = new ArrayList<>();
+    private List<DisplayEventEntity> mCustomUsageStatsList = new ArrayList<>();
     private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a", Locale.getDefault());
     private DateFormat mDateFormatTotal = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
     private Context mContext;
@@ -81,12 +81,11 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         // Rounding off to the nearest second, as we aren't showing milliseconds
         long startTime = Math.round(mCustomUsageStatsList.get(position).startTime / 1000D) * 1000;
         long endTime = Math.round(mCustomUsageStatsList.get(position).endTime / 1000D) * 1000;
-        boolean ongoing = mCustomUsageStatsList.get(position).ongoing;
         long totalTime = endTime - startTime;
 
         viewHolder.mAppIcon.setImageDrawable(mCustomUsageStatsList.get(position).appIcon);
         viewHolder.mStartTime.setText(mDateFormat.format(new Date(startTime)));
-        if (ongoing) {
+        if (mCustomUsageStatsList.get(position).ongoing == 1) {
             viewHolder.mEndTime.setVisibility(View.GONE);
             viewHolder.mEndTimeLabel.setVisibility(View.GONE);
             viewHolder.mTotalTime.setText(mContext.getResources().getString(R.string.ongoing));

@@ -6,13 +6,15 @@ import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.arch.persistence.room.Room;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
 import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.database.Database;
 import com.example.android.appusagestatistics.models.CustomUsageEvents;
-import com.example.android.appusagestatistics.models.DisplayUsageEvent;
+import com.example.android.appusagestatistics.models.DisplayEventEntity;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -26,7 +28,8 @@ import java.util.List;
 
 public class FormatCustomUsageEvents extends AndroidViewModel {
 
-    private MutableLiveData<List<DisplayUsageEvent>> displayLiveData = new MutableLiveData<>();
+    private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
+    private Database db;
 
     public FormatCustomUsageEvents(Application application) {
         super(application);
@@ -82,7 +85,7 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
     * Merging only happens if a FG immediately follows a BG
     */
     private void mergeBgFg(List<CustomUsageEvents> events) {
-        List<DisplayUsageEvent> copy = new ArrayList<>();
+        List<DisplayEventEntity> copy = new ArrayList<>();
         boolean skip = false;
 
         for (int i = 0; i < events.size() - 1; i++) {
@@ -98,22 +101,22 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
                 if (Constants.BG.equals(thisEvent.eventType)
                         && Constants.FG.equals(nextEvent.eventType)) {
 
-                    DisplayUsageEvent event = new DisplayUsageEvent(thisEvent.packageName,
+                    DisplayEventEntity event = new DisplayEventEntity(thisEvent.packageName,
                             nextEvent.timestamp, thisEvent.timestamp);
                     getIconName(event);
                     copy.add(event);
                     skip = true;
                 } else if (i == 0) {
                     // Making sure that Ongoing events in the middle of the list get dropped
-                    DisplayUsageEvent event = new DisplayUsageEvent(thisEvent.packageName,
-                            nextEvent.timestamp, true);
+                    DisplayEventEntity event = new DisplayEventEntity(thisEvent.packageName,
+                            nextEvent.timestamp, 1);
                     getIconName(event);
                     copy.add(event);
                 }
             } else if (i == 0) {
                 // Making sure that Ongoing events in the middle of the list get dropped
-                DisplayUsageEvent event = new DisplayUsageEvent(thisEvent.packageName,
-                        nextEvent.timestamp, true);
+                DisplayEventEntity event = new DisplayEventEntity(thisEvent.packageName,
+                        nextEvent.timestamp, 1);
                 getIconName(event);
                 copy.add(event);
             }
@@ -129,20 +132,20 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
     private void mergeSame() {
         final long MIN_TIME_DIFFERENCE = 1000 * 5;
 
-        DisplayUsageEvent previous = null;
-        List<DisplayUsageEvent> events = displayLiveData.getValue();
+        DisplayEventEntity previous = null;
+        List<DisplayEventEntity> events = displayLiveData.getValue();
 
         if (events == null)
             return;
 
-        Iterator<DisplayUsageEvent> iterator = events.iterator();
+        Iterator<DisplayEventEntity> iterator = events.iterator();
         while (iterator.hasNext()) {
             if (previous == null) {
                 previous = iterator.next();
                 continue;
             }
 
-            DisplayUsageEvent thisEvent = iterator.next();
+            DisplayEventEntity thisEvent = iterator.next();
 
             // THIS WILL MISS THE LAST EVENT
             if (previous.packageName.equals(thisEvent.packageName)) {
@@ -159,7 +162,7 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
         Log.i("GAAH2", "mergeSame: new Size " + events.size());
     }
 
-    private void getIconName(DisplayUsageEvent event) {
+    private void getIconName(DisplayEventEntity event) {
         try {
             event.appIcon = getApplication().getPackageManager()
                     .getApplicationIcon(event.packageName);
@@ -185,21 +188,29 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
             return packageName;
     }
 
-    public LiveData<List<DisplayUsageEvent>> setDisplayUsageEventsList(UsageStatsManager mUsageStatsManager,
-                                                                       String[] excludePackages) {
+    public LiveData<List<DisplayEventEntity>> setDisplayUsageEventsList(UsageStatsManager mUsageStatsManager,
+                                                                        String[] excludePackages) {
         List<CustomUsageEvents> usageEvents = getUsageEvents(mUsageStatsManager, excludePackages);
         if (usageEvents == null)
             return null;
+
+        if (db == null)
+            db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
 
         Collections.sort(usageEvents, (left, right) ->
                 Long.compare(right.timestamp, left.timestamp));
 
         mergeBgFg(usageEvents);
         mergeSame();
+        insertInDb();
         return displayLiveData;
     }
 
-    public LiveData<List<DisplayUsageEvent>> getDisplayUsageEventsList() {
+    public LiveData<List<DisplayEventEntity>> getDisplayUsageEventsList() {
         return displayLiveData;
+    }
+
+    private void insertInDb() {
+        new Thread(() -> db.dao().insertEvent(displayLiveData.getValue())).start();
     }
 }
