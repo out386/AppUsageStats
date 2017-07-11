@@ -6,9 +6,11 @@ import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Transformations;
 import android.arch.persistence.room.Room;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.example.android.appusagestatistics.R;
@@ -26,12 +28,12 @@ import java.util.List;
  * Created by j on 4/7/17.
  */
 
-public class FormatCustomUsageEvents extends AndroidViewModel {
+public class FormatEventsViewModel extends AndroidViewModel {
 
-    private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
+    private LiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
     private Database db;
 
-    public FormatCustomUsageEvents(Application application) {
+    public FormatEventsViewModel(Application application) {
         super(application);
     }
 
@@ -42,18 +44,11 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
      * @return A list of {@link android.app.usage.UsageStats}.
      */
     private List<CustomUsageEvents> getUsageEvents(UsageStatsManager mUsageStatsManager,
-                                                   String[] excludePackages) {
-        Calendar cal = Calendar.getInstance();
+                                                   String[] excludePackages, long startTime, long endTime) {
         List<CustomUsageEvents> copy = new ArrayList<>();
         UsageEvents.Event event = new UsageEvents.Event();
         String eventType;
-
-        cal.set(Calendar.HOUR, 0);
-        cal.set(Calendar.AM_PM, Calendar.AM);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        UsageEvents queryUsageEvents = mUsageStatsManager.queryEvents(cal.getTimeInMillis(),
-                System.currentTimeMillis());
+        UsageEvents queryUsageEvents = mUsageStatsManager.queryEvents(startTime, endTime);
 
         if (!queryUsageEvents.hasNextEvent())
             return null;
@@ -129,13 +124,13 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
     /*
     * Merges items from the same package name together if the events are less than MIN_TIME_DIFFERENCE ms apart
     */
-    private void mergeSame(List<DisplayEventEntity> events) {
+    private List<DisplayEventEntity> mergeSame(List<DisplayEventEntity> events) {
         final long MIN_TIME_DIFFERENCE = 1000 * 5;
 
         DisplayEventEntity previous = null;
 
         if (events == null)
-            return;
+            return null;
 
         Iterator<DisplayEventEntity> iterator = events.iterator();
         while (iterator.hasNext()) {
@@ -156,9 +151,9 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
                 }
             } else
                 previous = thisEvent;
-            displayLiveData.setValue(events);
         }
         Log.i("GAAH2", "mergeSame: new Size " + events.size());
+        return events;
     }
 
     private void getIconName(DisplayEventEntity event) {
@@ -187,29 +182,56 @@ public class FormatCustomUsageEvents extends AndroidViewModel {
             return packageName;
     }
 
-    public LiveData<List<DisplayEventEntity>> setDisplayUsageEventsList(UsageStatsManager mUsageStatsManager,
-                                                                        String[] excludePackages) {
-        List<CustomUsageEvents> usageEvents = getUsageEvents(mUsageStatsManager, excludePackages);
-        if (usageEvents == null)
-            return null;
+    public void setDisplayUsageEventsList(UsageStatsManager usageStatsManager,
+                                                                        String[] excludePackages, long startTime, long endTime) {
 
         if (db == null)
             db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
 
-        Collections.sort(usageEvents, (left, right) ->
-                Long.compare(right.timestamp, left.timestamp));
+        AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new  AsyncTask<Void, Void, List<DisplayEventEntity>>() {
 
-        List<DisplayEventEntity> merged = mergeBgFg(usageEvents);
-        mergeSame(merged);
-        insertInDb();
-        return displayLiveData;
+            @Override
+            protected List<DisplayEventEntity> doInBackground(Void... voids) {
+                return db.dao().getEvents(startTime, endTime);
+            }
+
+            @Override
+            protected void onPostExecute(List<DisplayEventEntity> eventsInDb) {
+                if (eventsInDb == null || eventsInDb.size() == 0) {
+                    Log.d("GAAH", "setDisplayUsageEventsList: null");
+                }
+                displayLiveData = findEvents(usageStatsManager, excludePackages, startTime, endTime);
+
+                super.onPostExecute(eventsInDb);
+            }
+        };
+
+        populateList.execute();
+
     }
 
     public LiveData<List<DisplayEventEntity>> getDisplayUsageEventsList() {
         return displayLiveData;
     }
 
-    private void insertInDb() {
-        new Thread(() -> db.dao().insertEvent(displayLiveData.getValue())).start();
+    private void insertInDb(List<DisplayEventEntity> events) {
+        new Thread(() -> db.dao().insertEvent(events)).start();
+    }
+
+    private MutableLiveData<List<DisplayEventEntity>> findEvents(UsageStatsManager usageStatsManager,
+                                                                 String[] excludePackages, long startTime, long endTime) {
+        List<CustomUsageEvents> usageEvents = getUsageEvents(usageStatsManager, excludePackages, startTime, endTime);
+        if (usageEvents == null)
+            return null;
+
+        Collections.sort(usageEvents, (left, right) ->
+                Long.compare(right.timestamp, left.timestamp));
+
+        List<DisplayEventEntity> merged = mergeBgFg(usageEvents);
+        merged = mergeSame(merged);
+        insertInDb(merged);
+        MutableLiveData<List<DisplayEventEntity>> newEvents = new MutableLiveData<>();
+        newEvents.setValue(merged);
+        return newEvents;
     }
 }
