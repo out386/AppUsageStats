@@ -127,9 +127,10 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         super.onResume();
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR, 0);
-        cal.set(Calendar.AM_PM, Calendar.AM);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        cal.set(Calendar.AM_PM, Calendar.AM);
 
         formatCustomUsageEvents
                 .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,

@@ -181,43 +181,20 @@ public class FormatEventsViewModel extends AndroidViewModel {
             return packageName;
     }
 
-    public void setDisplayUsageEventsList(UsageStatsManager usageStatsManager,
-                                          String[] excludePackages, long startTime, long endTime) {
-
-        if (db == null)
-            db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
-
-        AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new AsyncTask<Void, Void, List<DisplayEventEntity>>() {
-
-            @Override
-            protected List<DisplayEventEntity> doInBackground(Void... voids) {
-                return db.dao().getEvents(startTime, endTime);
-            }
-
-            @Override
-            protected void onPostExecute(List<DisplayEventEntity> eventsInDb) {
-                if (eventsInDb == null || eventsInDb.size() == 0) {
-                    Log.d("GAAH", "setDisplayUsageEventsList: null");
-                }
-                findEvents(usageStatsManager, excludePackages, startTime, endTime);
-
-                super.onPostExecute(eventsInDb);
-            }
-        };
-
-        populateList.execute();
-    }
-
     public LiveData<List<DisplayEventEntity>> getDisplayUsageEventsList() {
         return displayLiveData;
     }
 
     private void insertInDb(List<DisplayEventEntity> events) {
+        if (db == null)
+            return;
         new Thread(() -> db.dao().insertEvent(events)).start();
     }
 
     private void findEvents(UsageStatsManager usageStatsManager,
-                            String[] excludePackages, long startTime, long endTime) {
+                            String[] excludePackages, long startTime, long endTime,
+                            List<DisplayEventEntity> oldEntities, final int NUMBER_TO_REMOVE) {
+
         List<CustomUsageEvents> usageEvents = getUsageEvents(usageStatsManager, excludePackages, startTime, endTime);
         if (usageEvents == null)
             return;
@@ -227,7 +204,82 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
         List<DisplayEventEntity> merged = mergeBgFg(usageEvents);
         merged = mergeSame(merged);
-        insertInDb(merged);
-        displayLiveData.setValue(merged);
+
+        if (oldEntities != null) {
+            removeUnstables(oldEntities, NUMBER_TO_REMOVE, merged);
+        } else {
+            displayLiveData.setValue(merged);
+            insertInDb(merged);
+        }
+    }
+
+    private void removeUnstables(List<DisplayEventEntity> eventsInDb, int numberToRemove, List<DisplayEventEntity> merged) {
+        if (eventsInDb.size() < numberToRemove)
+            numberToRemove = eventsInDb.size();
+
+        int finalNumberToRemove = numberToRemove;
+        AsyncTask<Void, Void, Void> remove = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                Iterator<DisplayEventEntity> iterator = eventsInDb.iterator();
+                for (int i = 0; i < finalNumberToRemove && iterator.hasNext(); i++) {
+                    DisplayEventEntity current = iterator.next();
+                    db.dao().deleteEvent(current);
+                    Log.i("removed", "removeUnstables: deleted " + current.appName + current.startTime);
+                    iterator.remove();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                for (int i = merged.size() - 1; i >= 0; i--) {
+                    eventsInDb.add(0, merged.get(i));
+                    Log.d("merge", "onPostExecute: number: " + i + " merged: " + merged.get(i).appName);
+                }
+                displayLiveData.setValue(eventsInDb);
+                insertInDb(merged);
+                super.onPostExecute(aVoid);
+            }
+        };
+
+        remove.execute();
+    }
+
+    public void setDisplayUsageEventsList(UsageStatsManager usageStatsManager,
+                                          String[] excludePackages, long startTime, long endTime) {
+
+        if (db == null)
+            db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
+
+        AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new AsyncTask<Void, Void, List<DisplayEventEntity>>() {
+            private final int NUMBER_TO_REMOVE = 3;
+
+            @Override
+            protected List<DisplayEventEntity> doInBackground(Void... voids) {
+                return db.dao().getEvents(startTime, endTime);
+            }
+
+            @Override
+            protected void onPostExecute(List<DisplayEventEntity> eventsInDb) {
+                if (eventsInDb == null || eventsInDb.size() == 0) {
+                    Log.d("GAAH", "setDisplayUsageEventsList: null " + startTime + " " + endTime);
+                    findEvents(usageStatsManager, excludePackages, startTime, endTime, null, -1);
+                } else {
+                    for (int i = 0; i < 10; i++) {
+                        Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
+                    }
+
+                    long newStartTime = eventsInDb.get(NUMBER_TO_REMOVE).endTime + 20;
+
+                    Log.i("GAAH", "onPostExecute: new start time " + newStartTime);
+                    findEvents(usageStatsManager, excludePackages, newStartTime, endTime,
+                            eventsInDb, NUMBER_TO_REMOVE);
+                }
+                super.onPostExecute(eventsInDb);
+            }
+        };
+
+        populateList.execute();
     }
 }

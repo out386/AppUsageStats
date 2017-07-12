@@ -1,5 +1,6 @@
 package com.example.android.appusagestatistics.database;
 
+import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
@@ -18,4 +19,7 @@ public interface Dao {
 
     @Query("SELECT * FROM events WHERE startTime >= :startTime AND endTime <= :endTime ORDER BY startTime DESC")
     List<DisplayEventEntity> getEvents(long startTime, long endTime);
+
+    @Delete
+    void deleteEvent(DisplayEventEntity unstable);
 }
