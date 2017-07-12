@@ -10,8 +10,8 @@ public class DisplayEventEntity {
     public long startTime;
     public long endTime;
     public int ongoing;
-    @Ignore
     public String packageName;
+
     @Ignore
     public Drawable appIcon;
 
@@ -19,12 +19,14 @@ public class DisplayEventEntity {
 
     }
 
+    @Ignore
     public DisplayEventEntity(String packageName, long startTime, long endTime) {
         this.packageName = packageName;
         this.startTime = startTime;
         this.endTime = endTime;
     }
 
+    @Ignore
     public DisplayEventEntity(String packageName, long startTime, int ongoing) {
         this.packageName = packageName;
         this.startTime = startTime;

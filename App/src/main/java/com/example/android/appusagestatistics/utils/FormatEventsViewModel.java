@@ -96,21 +96,21 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
                     DisplayEventEntity event = new DisplayEventEntity(thisEvent.packageName,
                             nextEvent.timestamp, thisEvent.timestamp);
-                    getIconName(event);
+                    insertIconName(event, true);
                     copy.add(event);
                     skip = true;
                 } else if (i == 0) {
                     // Making sure that Ongoing events in the middle of the list get dropped
                     DisplayEventEntity event = new DisplayEventEntity(thisEvent.packageName,
                             nextEvent.timestamp, 1);
-                    getIconName(event);
+                    insertIconName(event, true);
                     copy.add(event);
                 }
             } else if (i == 0) {
                 // Making sure that Ongoing events in the middle of the list get dropped
                 DisplayEventEntity event = new DisplayEventEntity(thisEvent.packageName,
                         nextEvent.timestamp, 1);
-                getIconName(event);
+                insertIconName(event, true);
                 copy.add(event);
             }
         }
@@ -154,7 +154,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
         return events;
     }
 
-    private void getIconName(DisplayEventEntity event) {
+    private void insertIconName(DisplayEventEntity event, boolean needsAppName) {
         try {
             event.appIcon = getApplication().getPackageManager()
                     .getApplicationIcon(event.packageName);
@@ -162,7 +162,8 @@ public class FormatEventsViewModel extends AndroidViewModel {
             event.appIcon = getApplication()
                     .getDrawable(R.drawable.ic_default_app_launcher);
         }
-        event.appName = getAppName(event.packageName);
+        if (needsAppName)
+            event.appName = getAppName(event.packageName);
     }
 
     private String getAppName(String packageName) {
@@ -227,6 +228,9 @@ public class FormatEventsViewModel extends AndroidViewModel {
                     db.dao().deleteEvent(current);
                     Log.i("removed", "removeUnstables: deleted " + current.appName + current.startTime);
                     iterator.remove();
+                }
+                for (DisplayEventEntity displayEventEntity : eventsInDb) {
+                    insertIconName(displayEventEntity, false);
                 }
                 return null;
             }
