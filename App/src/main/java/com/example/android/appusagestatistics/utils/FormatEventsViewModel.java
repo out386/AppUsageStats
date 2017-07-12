@@ -197,8 +197,10 @@ public class FormatEventsViewModel extends AndroidViewModel {
                             List<DisplayEventEntity> oldEntities, final int NUMBER_TO_REMOVE) {
 
         List<CustomUsageEvents> usageEvents = getUsageEvents(usageStatsManager, excludePackages, startTime, endTime);
-        if (usageEvents == null)
+        if (usageEvents == null) {
+            displayLiveData.setValue(null);
             return;
+        }
 
         Collections.sort(usageEvents, (left, right) ->
                 Long.compare(right.timestamp, left.timestamp));

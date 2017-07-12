@@ -20,22 +20,29 @@ import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.LifecycleFragment;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
+import com.example.android.appusagestatistics.utils.DisplaySize;
 import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
+import com.example.android.appusagestatistics.utils.Tools;
 
 import java.util.Calendar;
 
@@ -49,14 +56,13 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
     @BindView(R.id.recyclerview_app_usage)
     protected RecyclerView mRecyclerView;
-    @BindView(R.id.button_open_usage_setting)
-    protected Button mOpenUsageSettingButton;
     @BindArray(R.array.exclude_packages)
     protected String[] excludePackages;
 
     private UsageStatsManager mUsageStatsManager;
     private Unbinder unbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
+    private MaterialDialog dialog;
 
     /**
      * Use this factory method to create a new instance of
@@ -111,13 +117,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 .observe(this, events -> {
                     if (events == null) {
                         Log.i(TAG, "The user may not have allowed access to apps usage.");
-                        Toast.makeText(getActivity(),
-                                getString(R.string.explanation_access_to_appusage_is_not_enabled),
-                                Toast.LENGTH_LONG).show();
-                        mOpenUsageSettingButton.setVisibility(View.VISIBLE);
-                        mOpenUsageSettingButton.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
-                    } else {
-                        mOpenUsageSettingButton.setVisibility(View.GONE);
+                         dialog = showDialog();
                     }
                 });
     }
@@ -137,11 +137,34 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                         cal.getTimeInMillis(), System.currentTimeMillis());
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (dialog != null)
+            dialog.dismiss();
+    }
+
     private String findLauncher() {
         PackageManager localPackageManager = getContext().getPackageManager();
         Intent intent = new Intent("android.intent.action.MAIN");
         intent.addCategory("android.intent.category.HOME");
         return localPackageManager.resolveActivity(intent,
                 PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+    }
+
+    private MaterialDialog showDialog() {
+        MaterialDialog d = new MaterialDialog.Builder(getContext())
+                .title(R.string.open_app_usage_setting_title)
+                .content(R.string.explanation_access_to_appusage_is_not_enabled)
+                .positiveText(R.string.ok)
+                .canceledOnTouchOutside(false)
+                .onPositive((dialog, which) -> startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)))
+                .show();
+        DisplaySize displaySize = Tools.getDisplaySizes(getActivity());
+        Window w = d.getWindow();
+        if (w != null) {
+            w.setLayout(displaySize.width, w.getAttributes().height);
+        }
+        return d;
     }
 }
