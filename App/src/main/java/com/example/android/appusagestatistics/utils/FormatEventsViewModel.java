@@ -158,11 +158,11 @@ public class FormatEventsViewModel extends AndroidViewModel {
         try {
             event.appIcon = getApplication().getPackageManager()
                     .getApplicationIcon(event.packageName);
-            event.appName = getAppName(event.packageName);
         } catch (PackageManager.NameNotFoundException e) {
             event.appIcon = getApplication()
                     .getDrawable(R.drawable.ic_default_app_launcher);
         }
+        event.appName = getAppName(event.packageName);
     }
 
     private String getAppName(String packageName) {
@@ -174,9 +174,10 @@ public class FormatEventsViewModel extends AndroidViewModel {
         } catch (PackageManager.NameNotFoundException e) {
             return packageName;
         }
-        if (applicationInfo != null)
-            return packageManager.getApplicationLabel(applicationInfo).toString();
-        else
+        if (applicationInfo != null) {
+            String name = packageManager.getApplicationLabel(applicationInfo).toString();
+            return "".equals(name) ? packageName : name;
+        } else
             return packageName;
     }
 
