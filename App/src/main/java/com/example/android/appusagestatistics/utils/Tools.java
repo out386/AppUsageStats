@@ -7,8 +7,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.view.Display;
 
-import com.example.android.appusagestatistics.activities.AppUsageStatisticsActivity;
-
 /**
  * Created by j on 12/7/17.
  */

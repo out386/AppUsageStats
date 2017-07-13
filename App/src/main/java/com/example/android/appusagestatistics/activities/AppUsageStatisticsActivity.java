@@ -16,11 +16,13 @@
 
 package com.example.android.appusagestatistics.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
 import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.services.PopulateDatabaseService;
 
 /**
  * Launcher Activity for the App Usage Statistics sample app.
@@ -36,5 +38,10 @@ public class AppUsageStatisticsActivity extends AppCompatActivity {
                     .add(R.id.container, AppUsageStatisticsFragment.newInstance())
                     .commit();
         }
+
+        Intent intent = new Intent(this, PopulateDatabaseService.class);
+        stopService(intent);
+        startService(intent);
+
     }
 }
