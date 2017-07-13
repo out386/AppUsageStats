@@ -20,23 +20,17 @@ import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.LifecycleFragment;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
-import android.widget.Toast;
 
-import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
@@ -91,7 +85,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_app_usage_statistics, container, false);
         unbinder = ButterKnife.bind(this, view);
-        excludePackages[excludePackages.length - 1] = findLauncher();
+        excludePackages[excludePackages.length - 1] = Tools.findLauncher(getActivity().getApplicationContext());
         return view;
     }
 
@@ -117,7 +111,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 .observe(this, events -> {
                     if (events == null) {
                         Log.i(TAG, "The user may not have allowed access to apps usage.");
-                         dialog = showDialog();
+                        dialog = showDialog();
                     }
                 });
     }
@@ -142,14 +136,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         super.onPause();
         if (dialog != null)
             dialog.dismiss();
-    }
-
-    private String findLauncher() {
-        PackageManager localPackageManager = getContext().getPackageManager();
-        Intent intent = new Intent("android.intent.action.MAIN");
-        intent.addCategory("android.intent.category.HOME");
-        return localPackageManager.resolveActivity(intent,
-                PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
     }
 
     private MaterialDialog showDialog() {
