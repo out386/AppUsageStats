@@ -42,6 +42,5 @@ public class AppUsageStatisticsActivity extends AppCompatActivity {
         Intent intent = new Intent(this, PopulateDatabaseService.class);
         stopService(intent);
         startService(intent);
-
     }
 }
