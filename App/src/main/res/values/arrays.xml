@@ -5,4 +5,8 @@
         <item>android</item>
         <item></item>
     </string-array>
+    <string-array name="viewpager_tab_titles">
+        <item>Timeline</item>
+        <item>Aggregate</item>
+    </string-array>
 </resources>

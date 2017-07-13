@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
+<?xml version="1.0" encoding="UTF-8"?><!--
  Copyright 2014 The Android Open Source Project
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,4 +26,6 @@
         statistics. You need to enable access
         for this app through Settings. Tap "OK", and allow the permission for this app.
     </string>
+
+    <string name="hello_blank_fragment">Not implemented yet</string>
 </resources>

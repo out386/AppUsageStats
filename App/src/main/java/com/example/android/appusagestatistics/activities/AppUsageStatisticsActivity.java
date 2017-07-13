@@ -22,6 +22,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
 import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.fragments.ViewPagerFragment;
 import com.example.android.appusagestatistics.services.PopulateDatabaseService;
 
 /**
@@ -35,7 +36,7 @@ public class AppUsageStatisticsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_app_usage_statistics);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, AppUsageStatisticsFragment.newInstance())
+                    .add(R.id.container, new ViewPagerFragment())
                     .commit();
         }
 
