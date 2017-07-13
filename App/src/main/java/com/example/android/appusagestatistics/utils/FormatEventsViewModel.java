@@ -194,7 +194,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
     private void findEvents(UsageStatsManager usageStatsManager,
                             String[] excludePackages, long startTime, long endTime,
-                            List<DisplayEventEntity> oldEntities, final int NUMBER_TO_REMOVE) {
+                            List<DisplayEventEntity> oldEntities, final int NUMBER_TO_REMOVE, boolean isIconNeeded) {
 
         List<CustomUsageEvents> usageEvents = getUsageEvents(usageStatsManager, excludePackages, startTime, endTime);
         if (usageEvents == null) {
@@ -209,14 +209,15 @@ public class FormatEventsViewModel extends AndroidViewModel {
         merged = mergeSame(merged);
 
         if (oldEntities != null) {
-            removeUnstables(oldEntities, NUMBER_TO_REMOVE, merged);
+            removeUnstables(oldEntities, NUMBER_TO_REMOVE, merged, isIconNeeded);
         } else {
             displayLiveData.setValue(merged);
             insertInDb(merged);
         }
     }
 
-    private void removeUnstables(List<DisplayEventEntity> eventsInDb, int numberToRemove, List<DisplayEventEntity> merged) {
+    private void removeUnstables(List<DisplayEventEntity> eventsInDb, int numberToRemove,
+                                 List<DisplayEventEntity> merged, boolean isIconNeeded) {
         if (eventsInDb.size() < numberToRemove)
             numberToRemove = eventsInDb.size();
 
@@ -231,9 +232,10 @@ public class FormatEventsViewModel extends AndroidViewModel {
                     Log.i("removed", "removeUnstables: deleted " + current.appName + current.startTime);
                     iterator.remove();
                 }
-                for (DisplayEventEntity displayEventEntity : eventsInDb) {
-                    insertIconName(displayEventEntity, false);
-                }
+                if (isIconNeeded)
+                    for (DisplayEventEntity displayEventEntity : eventsInDb) {
+                        insertIconName(displayEventEntity, false);
+                    }
                 return null;
             }
 
@@ -253,7 +255,8 @@ public class FormatEventsViewModel extends AndroidViewModel {
     }
 
     public void setDisplayUsageEventsList(UsageStatsManager usageStatsManager,
-                                          String[] excludePackages, long startTime, long endTime) {
+                                          String[] excludePackages, long startTime, long endTime,
+                                          boolean isIconNeeded) {
 
         if (db == null)
             db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
@@ -270,7 +273,8 @@ public class FormatEventsViewModel extends AndroidViewModel {
             protected void onPostExecute(List<DisplayEventEntity> eventsInDb) {
                 if (eventsInDb == null || eventsInDb.size() == 0) {
                     Log.d("GAAH", "setDisplayUsageEventsList: null " + startTime + " " + endTime);
-                    findEvents(usageStatsManager, excludePackages, startTime, endTime, null, -1);
+                    findEvents(usageStatsManager, excludePackages, startTime, endTime,
+                            null, -1, isIconNeeded);
                 } else {
                     for (int i = 0; i < 10; i++) {
                         Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
@@ -280,7 +284,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
                     Log.i("GAAH", "onPostExecute: new start time " + newStartTime);
                     findEvents(usageStatsManager, excludePackages, newStartTime, endTime,
-                            eventsInDb, NUMBER_TO_REMOVE);
+                            eventsInDb, NUMBER_TO_REMOVE, isIconNeeded);
                 }
                 super.onPostExecute(eventsInDb);
             }

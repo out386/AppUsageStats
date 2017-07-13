@@ -128,7 +128,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
         formatCustomUsageEvents
                 .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
-                        cal.getTimeInMillis(), System.currentTimeMillis());
+                        cal.getTimeInMillis(), System.currentTimeMillis(), true);
     }
 
     @Override

@@ -94,7 +94,7 @@ public class PopulateDatabaseService extends Service {
             public void run() {
                 if (mViewModel != null) {
                     mViewModel.setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
-                            cal.getTimeInMillis(), System.currentTimeMillis());
+                            cal.getTimeInMillis(), System.currentTimeMillis(), false);
                     mDatabaseHandler.postDelayed(this, DELAY);
                 }
             }
