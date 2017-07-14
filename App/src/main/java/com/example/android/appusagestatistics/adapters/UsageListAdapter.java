@@ -86,15 +86,9 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         viewHolder.mAppIcon.setImageDrawable(mCustomUsageStatsList.get(position).appIcon);
         viewHolder.mStartTime.setText(mDateFormat.format(new Date(startTime)));
         if (mCustomUsageStatsList.get(position).ongoing == 1) {
-            viewHolder.mEndTime.setVisibility(View.GONE);
-            viewHolder.mEndTimeLabel.setVisibility(View.GONE);
             viewHolder.mTotalTime.setText(mContext.getResources().getString(R.string.ongoing));
             return;
-        } else {
-            viewHolder.mEndTime.setVisibility(View.VISIBLE);
-            viewHolder.mEndTimeLabel.setVisibility(View.VISIBLE);
         }
-        viewHolder.mEndTime.setText(mDateFormat.format(new Date(endTime)));
         viewHolder.mTotalTime.setText(mDateFormatTotal.format(new Date(totalTime)));
     }
 
@@ -113,12 +107,8 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         TextView mAppName;
         @BindView(R.id.start_time)
         TextView mStartTime;
-        @BindView(R.id.end_time)
-        TextView mEndTime;
         @BindView(R.id.total_time)
         TextView mTotalTime;
-        @BindView(R.id.end_time_label)
-        TextView mEndTimeLabel;
         @BindView(R.id.app_icon)
         ImageView mAppIcon;
 

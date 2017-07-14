@@ -18,115 +18,76 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
+    android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
-    android:background="?android:attr/selectableItemBackground">
+    android:orientation="horizontal"
+    android:paddingRight="16dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/start_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/timeline_time_bg"
+            android:gravity="center"
+            android:padding="10dp"
+            android:textColor="@color/textBlack"
+            android:textSize="15sp"
+            tools:text="12:00:15 AM" />
+
+    </LinearLayout>
 
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:src="@drawable/line"
-        android:tint="?android:colorAccent" />
+        android:scaleType="fitXY"
+        android:src="@drawable/timeline_line"
+        android:tint="@color/colorAccent" />
+
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="vertical"
-        android:paddingBottom="50dp">
+        android:paddingBottom="20dp"
+        android:paddingTop="20dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/app_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerInside"
+            android:paddingBottom="5dp"
+            tools:src="@drawable/ic_default_app_launcher" />
+
+        <TextView
+            android:id="@+id/textview_package_name"
+            style="@style/PackageNameFont"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingBottom="15dp">
+            android:gravity="center"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:textColor="@color/textBlack"
+            android:textSize="20sp"
+            tools:text="Example Appname" />
 
-            <TextView
-                android:id="@+id/start_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="8dp"
-                android:paddingEnd="8dp"
-                android:paddingStart="8dp"
-                android:textColor="?android:colorAccent"
-                android:textSize="20sp"
-                tools:text="12:00 AM" />
-
-            <TextView
-                android:id="@+id/end_time_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="8dp"
-                android:paddingEnd="8dp"
-                android:paddingStart="8dp"
-                android:text="@string/list_time_separator"
-                android:textColor="?android:colorAccent"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/end_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="8dp"
-                android:paddingEnd="8dp"
-                android:paddingStart="8dp"
-                android:textColor="?android:colorAccent"
-                android:textSize="20sp"
-                tools:text="1:00 PM" />
-
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/total_time"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="40dp">
+            android:gravity="center"
+            android:paddingTop="5dp"
+            android:textColor="@color/textDarkGray"
+            android:textSize="15sp"
+            tools:text="1 hour, 3 minutes, and 10 seconds" />
 
-            <ImageView
-                android:id="@+id/app_icon"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:scaleType="centerInside"
-                tools:src="@drawable/ic_default_app_launcher" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/margin_medium"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/textview_package_name"
-                    style="@style/PackageNameFont"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/textBlack"
-                    android:textSize="15sp"
-                    tools:text="Example Appname" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingTop="10dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/total_time"
-                        android:textColor="@color/textDarkGray" />
-
-                    <TextView
-                        android:id="@+id/total_time"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/textDarkGray"
-                        tools:text="00:30:01" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
     </LinearLayout>
+
 </LinearLayout>

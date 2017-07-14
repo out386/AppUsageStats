@@ -4,7 +4,8 @@
     <color name="colorPrimary">#FF8BC34A</color>
     <color name="colorAccent">#FFFFe57F</color>
     <color name="textBlack">#FF000000</color>
-    <color name="textDarkGray">#FF555555</color>
+    <color name="textDarkGray">#FF777777</color>
+    <color name="backgroundLightGray">#FFDDDDDD</color>
     <color name="textWhite">#FFFFFFFF</color>
     <color name="textWhiteTransparent">#CCFFFFFF</color>
     <color name="colorAccentLight">#FFFFFFB0</color>
