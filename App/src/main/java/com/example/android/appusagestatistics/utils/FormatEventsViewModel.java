@@ -216,17 +216,14 @@ public class FormatEventsViewModel extends AndroidViewModel {
         }
     }
 
-    private void removeUnstables(List<DisplayEventEntity> eventsInDb, int numberToRemove,
+    private void removeUnstables(List<DisplayEventEntity> eventsInDb, final int NUMBER_TO_REMOVE,
                                  List<DisplayEventEntity> merged, boolean isIconNeeded) {
-        if (eventsInDb.size() < numberToRemove)
-            numberToRemove = eventsInDb.size();
 
-        int finalNumberToRemove = numberToRemove;
         AsyncTask<Void, Void, Void> remove = new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
                 Iterator<DisplayEventEntity> iterator = eventsInDb.iterator();
-                for (int i = 0; i < finalNumberToRemove && iterator.hasNext(); i++) {
+                for (int i = 0; i < NUMBER_TO_REMOVE && iterator.hasNext(); i++) {
                     DisplayEventEntity current = iterator.next();
                     db.dao().deleteEvent(current);
                     Log.i("removed", "removeUnstables: deleted " + current.appName + current.startTime);
@@ -262,7 +259,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
             db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
 
         AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new AsyncTask<Void, Void, List<DisplayEventEntity>>() {
-            private final int NUMBER_TO_REMOVE = 3;
+            private int numberToRemove = 3;
 
             @Override
             protected List<DisplayEventEntity> doInBackground(Void... voids) {
@@ -276,15 +273,17 @@ public class FormatEventsViewModel extends AndroidViewModel {
                     findEvents(usageStatsManager, excludePackages, startTime, endTime,
                             null, -1, isIconNeeded);
                 } else {
-                    for (int i = 0; i < 10; i++) {
+                    for (int i = 0; i < 10 && i < eventsInDb.size(); i++) {
                         Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
                     }
 
-                    long newStartTime = eventsInDb.get(NUMBER_TO_REMOVE).endTime + 20;
+                    if (numberToRemove >= eventsInDb.size())
+                        numberToRemove = eventsInDb.size() - 1;
+                    long newStartTime = eventsInDb.get(numberToRemove).endTime + 20;
 
                     Log.i("GAAH", "onPostExecute: new start time " + newStartTime);
                     findEvents(usageStatsManager, excludePackages, newStartTime, endTime,
-                            eventsInDb, NUMBER_TO_REMOVE, isIconNeeded);
+                            eventsInDb, numberToRemove, isIconNeeded);
                 }
                 super.onPostExecute(eventsInDb);
             }
