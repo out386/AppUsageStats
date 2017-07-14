@@ -30,7 +30,7 @@
         android:padding="10dp">
 
         <TextView
-            android:id="@+id/start_time"
+            android:id="@+id/header_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/timeline_time_bg"
@@ -42,11 +42,11 @@
             tools:text="Today" />
 
         <TextView
+            android:id="@+id/header_usage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:padding="10dp"
-            android:text="Total usage: 5 hours, 8 minutes"
             android:textColor="@color/textBlack"
             android:textSize="15sp"
             tools:text="Total usage: 5 hours, 8 minutes" />

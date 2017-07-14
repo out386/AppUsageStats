@@ -30,15 +30,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.UsageListAdapter;
+import com.example.android.appusagestatistics.models.DisplayEventEntity;
 import com.example.android.appusagestatistics.utils.DisplaySize;
 import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
 import com.example.android.appusagestatistics.utils.Tools;
 
 import java.util.Calendar;
+import java.util.List;
 
 import butterknife.BindArray;
 import butterknife.BindView;
@@ -50,6 +53,10 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
     @BindView(R.id.recyclerview_app_usage)
     protected RecyclerView mRecyclerView;
+    @BindView(R.id.header_time)
+    protected TextView headerTime;
+    @BindView(R.id.header_usage)
+    protected TextView headerUsage;
     @BindArray(R.array.exclude_packages)
     protected String[] excludePackages;
 
@@ -112,7 +119,8 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                     if (events == null) {
                         Log.i(TAG, "The user may not have allowed access to apps usage.");
                         dialog = showDialog();
-                    }
+                    } else
+                        headerUsage.setText(Tools.formatTotalTime(0, findTotalUsage(events)));
                 });
     }
 
@@ -164,5 +172,15 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
             w.setLayout(displaySize.width, w.getAttributes().height);
         }
         return d;
+    }
+
+    private long findTotalUsage(List<DisplayEventEntity> events) {
+        long totalUsage = 0;
+        for (DisplayEventEntity event : events) {
+            if (event.endTime == 0)
+                continue;
+            totalUsage += event.endTime - event.startTime;
+        }
+        return totalUsage;
     }
 }
