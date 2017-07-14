@@ -121,9 +121,11 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
     /*
     * Merges items from the same package name together if the events are less than MIN_TIME_DIFFERENCE ms apart
+    * Also drops items with a duration less than MIN_TIME_TOLERANCE ms
     */
     private List<DisplayEventEntity> mergeSame(List<DisplayEventEntity> events) {
         final long MIN_TIME_DIFFERENCE = 1000 * 5;
+        final int MIN_TIME_TOLERANCE = 600;
 
         DisplayEventEntity previous = null;
 
@@ -140,15 +142,19 @@ public class FormatEventsViewModel extends AndroidViewModel {
             DisplayEventEntity thisEvent = iterator.next();
 
             // THIS WILL MISS THE LAST EVENT
-            if (previous.packageName.equals(thisEvent.packageName)) {
-                if (previous.startTime - thisEvent.endTime > MIN_TIME_DIFFERENCE) {
+            if (thisEvent.endTime > 0 && (thisEvent.endTime - thisEvent.startTime) < MIN_TIME_TOLERANCE) {
+                iterator.remove();
+            } else {
+                if (previous.packageName.equals(thisEvent.packageName)) {
+                    if (previous.startTime - thisEvent.endTime > MIN_TIME_DIFFERENCE) {
+                        previous = thisEvent;
+                    } else {
+                        previous.startTime = thisEvent.startTime;
+                        iterator.remove();
+                    }
+                } else
                     previous = thisEvent;
-                } else {
-                    previous.startTime = thisEvent.startTime;
-                    iterator.remove();
-                }
-            } else
-                previous = thisEvent;
+            }
         }
         Log.i("GAAH2", "mergeSame: new Size " + events.size());
         return events;
