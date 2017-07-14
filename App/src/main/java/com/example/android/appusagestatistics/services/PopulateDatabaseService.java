@@ -88,6 +88,7 @@ public class PopulateDatabaseService extends Service {
 
     private void populateDatabase() {
         final long DELAY = 10 * 60 * 1000;
+        final long FIRST_START_DELAY = 10 * 1000;
 
         mDatabaseRunnable = new Runnable() {
             @Override
@@ -99,7 +100,7 @@ public class PopulateDatabaseService extends Service {
                 }
             }
         };
-        mDatabaseHandler.postDelayed(mDatabaseRunnable, DELAY);
+        mDatabaseHandler.postDelayed(mDatabaseRunnable, FIRST_START_DELAY);
     }
 
     @Override
