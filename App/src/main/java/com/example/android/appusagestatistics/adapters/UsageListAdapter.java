@@ -87,7 +87,9 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
             viewHolder.mTotalTime.setText(mContext.getResources().getString(R.string.ongoing));
             return;
         }
-        viewHolder.mTotalTime.setText(Tools.formatTotalTime(startTime, endTime));
+        String totalTime = Tools.formatTotalTime(startTime, endTime, true);
+        viewHolder.mTotalTime.setText(totalTime == null ?
+                mContext.getResources().getString(R.string.no_usage) : totalTime);
     }
 
     @Override

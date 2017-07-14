@@ -28,4 +28,6 @@
     </string>
 
     <string name="hello_blank_fragment">Not implemented yet</string>
+    <string name="total_usage">"Total usage: %s"</string>
+    <string name="no_usage">"No usage"</string>
 </resources>

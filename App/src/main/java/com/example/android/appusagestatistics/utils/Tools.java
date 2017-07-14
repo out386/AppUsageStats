@@ -31,9 +31,13 @@ public class Tools {
                 PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
     }
 
-    public static String formatTotalTime(long startMillis, long endMillis) {
+    public static String formatTotalTime(long startMillis, long endMillis, boolean needSeconds) {
         SimpleDateFormat sdfSpaces = new SimpleDateFormat("H m s");
-        SimpleDateFormat sdfSingular = new SimpleDateFormat("'$'H 'hour,' '$'m 'minute, and' '$'s 'second'");
+        SimpleDateFormat sdfSingular;
+        if (needSeconds)
+            sdfSingular = new SimpleDateFormat("'$'H 'hour,' '$'m 'minute, and' '$'s 'second'");
+        else
+            sdfSingular = new SimpleDateFormat("'$'H 'hour, and' '$'m 'minute'");
         Date date = new Date(endMillis - startMillis);
 
         sdfSingular.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -83,14 +87,27 @@ public class Tools {
             formatted = formatted.replace("minute, ", "");
         if (pluralS == 1)
             formatted = formatted.replace("second", "seconds");
-        else if (pluralS == 2)
+        else if (pluralS == 2) {
             formatted = formatted.replace("second", "");
+            formatted = formatted.replace(", and", "");
+        }
 
-        if (pluralH == 2 && pluralM == 2)
-            formatted = formatted.replace("and", "");
+        if (!needSeconds && pluralH == 2) {
+            if (pluralM == 2)
+                formatted = null;
+            else
+                formatted = formatted.replace("and", "");
+        } else if (needSeconds && pluralH == 2 && pluralM == 2) {
+            if (pluralS == 2)
+                formatted = null;
+            else
+                formatted = formatted.replace("and", "");
+        }
 
-        formatted = formatted.replace("$0", "");
-        formatted = formatted.replace("$", "");
+        if (formatted != null) {
+            formatted = formatted.replace("$0", "");
+            formatted = formatted.replace("$", "");
+        }
 
         return formatted;
     }

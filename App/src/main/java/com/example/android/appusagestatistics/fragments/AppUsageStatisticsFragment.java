@@ -119,8 +119,12 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                     if (events == null) {
                         Log.i(TAG, "The user may not have allowed access to apps usage.");
                         dialog = showDialog();
-                    } else
-                        headerUsage.setText(Tools.formatTotalTime(0, findTotalUsage(events)));
+                    } else {
+                        String formattedTime = Tools.formatTotalTime(0, findTotalUsage(events), false);
+                        headerUsage.setText(String.format(getResources().getString(R.string.total_usage),
+                                formattedTime == null ?
+                                        getResources().getString(R.string.no_usage) : formattedTime));
+                    }
                 });
     }
 
