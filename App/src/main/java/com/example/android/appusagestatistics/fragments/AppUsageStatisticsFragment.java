@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -64,6 +65,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private Unbinder unbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
     private MaterialDialog dialog;
+    private Handler handler;
 
     /**
      * Use this factory method to create a new instance of
@@ -106,6 +108,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
 
+        handler = new Handler();
         UsageListAdapter mUsageListAdapter = new UsageListAdapter(this);
         mRecyclerView.scrollToPosition(0);
         mRecyclerView.setAdapter(mUsageListAdapter);
@@ -126,6 +129,12 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                                         getResources().getString(R.string.no_usage) : formattedTime));
                     }
                 });
+
+        headerTime.setOnClickListener(view -> {
+            mRecyclerView.scrollToPosition(30);
+            handler.postDelayed(() ->
+                    mRecyclerView.smoothScrollToPosition(0), 10);
+        });
     }
 
     @Override

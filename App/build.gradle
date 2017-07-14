@@ -24,8 +24,6 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:26.0.0-alpha1'
     compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
     compile "com.android.support:design:26.0.0-alpha1"
-    // Streamsupport
-    compile 'net.sourceforge.streamsupport:streamsupport:1.5.5'
 
 
     compile "android.arch.lifecycle:runtime:1.0.0-alpha3"
