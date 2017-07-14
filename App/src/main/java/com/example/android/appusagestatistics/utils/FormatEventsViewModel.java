@@ -255,6 +255,10 @@ public class FormatEventsViewModel extends AndroidViewModel {
                                           String[] excludePackages, long startTime, long endTime,
                                           boolean isIconNeeded) {
 
+        if (startTime >= endTime) {
+            displayLiveData.setValue(null);
+            return;
+        }
         if (db == null)
             db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
 
@@ -282,6 +286,10 @@ public class FormatEventsViewModel extends AndroidViewModel {
                     long newStartTime = eventsInDb.get(numberToRemove).endTime + 20;
 
                     Log.i("GAAH", "onPostExecute: new start time " + newStartTime);
+                    if (newStartTime >= endTime) {
+                        displayLiveData.setValue(eventsInDb);
+                        return;
+                    }
                     findEvents(usageStatsManager, excludePackages, newStartTime, endTime,
                             eventsInDb, numberToRemove, isIconNeeded);
                 }
