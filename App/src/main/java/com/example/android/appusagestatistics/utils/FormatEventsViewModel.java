@@ -30,6 +30,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
     private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
     private Database db;
+    private PackageManager pm;
 
     public FormatEventsViewModel(Application application) {
         super(application);
@@ -162,7 +163,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
     private void insertIconName(DisplayEventEntity event, boolean needsAppName) {
         try {
-            event.appIcon = getApplication().getPackageManager()
+            event.appIcon = pm
                     .getApplicationIcon(event.packageName);
         } catch (PackageManager.NameNotFoundException e) {
             event.appIcon = getApplication()
@@ -174,15 +175,14 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
     private String getAppName(String packageName) {
         ApplicationInfo applicationInfo;
-        PackageManager packageManager = getApplication().getPackageManager();
         try {
-            applicationInfo = packageManager
+            applicationInfo = pm
                     .getApplicationInfo(packageName, 0);
         } catch (PackageManager.NameNotFoundException e) {
             return packageName;
         }
         if (applicationInfo != null) {
-            String name = packageManager.getApplicationLabel(applicationInfo).toString();
+            String name = pm.getApplicationLabel(applicationInfo).toString();
             return "".equals(name) ? packageName : name;
         } else
             return packageName;
@@ -267,6 +267,8 @@ public class FormatEventsViewModel extends AndroidViewModel {
         }
         if (db == null)
             db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
+        if (pm == null)
+            pm = getApplication().getPackageManager();
 
         AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new AsyncTask<Void, Void, List<DisplayEventEntity>>() {
             private int numberToRemove = 3;
