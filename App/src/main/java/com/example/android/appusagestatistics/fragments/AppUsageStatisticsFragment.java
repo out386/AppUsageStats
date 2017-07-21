@@ -16,6 +16,7 @@
 
 package com.example.android.appusagestatistics.fragments;
 
+import android.animation.Animator;
 import android.app.AppOpsManager;
 import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.LifecycleFragment;
@@ -26,6 +27,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
@@ -36,6 +38,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -68,23 +71,28 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
     @BindView(R.id.recyclerview_app_usage)
-    protected RecyclerView mRecyclerView;
+    RecyclerView mRecyclerView;
     @BindView(R.id.header_usage)
-    protected TextView headerUsage;
+    TextView headerUsage;
     @BindArray(R.array.exclude_packages)
-    protected String[] excludePackages;
+    String[] excludePackages;
     @BindView(R.id.date_next)
     Button dateNext;
     @BindView(R.id.date_previous)
     Button datePrev;
     @BindView(R.id.date_text)
     TextView dateText;
+    @BindView(R.id.date_layout)
+    RelativeLayout dateLayout;
+    @BindView(R.id.floating_date_text)
+    TextView floatingDate;
     private UsageStatsManager mUsageStatsManager;
     private Unbinder unbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
     private MaterialDialog dialog;
     private int mDateOffset = 0;
     private boolean isJustNoOffset = false;
+    private boolean isDateLayoutVisible = true;
     private SimpleDateFormat sdf = new SimpleDateFormat("d MMMM");
     private PackageManager pm;
 
@@ -122,6 +130,8 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     @Override
     public void onDestroyView() {
         unbinder.unbind();
+        if (mRecyclerView != null)
+            mRecyclerView.clearOnScrollListeners();
         super.onDestroyView();
     }
 
@@ -156,7 +166,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         formatCustomUsageEvents
                 .getDisplayUsageEventsList()
                 .observe(this, events -> {
-                    if (! checkForPermission()) {
+                    if (!checkForPermission()) {
                         Log.i(TAG, "The user may not have allowed access to apps usage.");
                         dialog = showDialog();
                     } else {
@@ -194,7 +204,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 dateNext.setTextColor(ContextCompat
                         .getColor(getActivity().getApplicationContext(), R.color.textWhite));
             }
-            triggerEvents();
+            triggerEvents(true);
         });
         dateNext.setOnClickListener(view -> {
             mDateOffset += 1;
@@ -210,7 +220,21 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                     dateNext.setTextColor(ContextCompat
                             .getColor(getActivity().getApplicationContext(), R.color.textDisabled));
                 }
-                triggerEvents();
+                triggerEvents(true);
+            }
+        });
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (isDateLayoutVisible && dy > 2) {
+                    isDateLayoutVisible = false;
+                    dateLayout.animate().translationY(dateLayout.getHeight()).setDuration(250).start();
+                } else if (!isDateLayoutVisible && dy < -2) {
+                    isDateLayoutVisible = true;
+                    dateLayout.animate().translationY(0).setDuration(250).start();
+                }
             }
         });
     }
@@ -218,7 +242,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     @Override
     public void onResume() {
         super.onResume();
-        triggerEvents();
+        triggerEvents(false);
     }
 
     @Override
@@ -262,7 +286,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         return -1;
     }
 
-    private void triggerEvents() {
+    private void triggerEvents(boolean isButtonClicked) {
         Calendar startCalender = Calendar.getInstance();
         if (mDateOffset < 0)
             startCalender.add(Calendar.DATE, mDateOffset);
@@ -280,10 +304,13 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         endCalendar.set(Calendar.SECOND, 59);
         endCalendar.set(Calendar.MILLISECOND, 999);
 
-        dateText.setText(sdf.format(new Date(startCalender.getTimeInMillis())));
+        String formattedDate = sdf.format(new Date(startCalender.getTimeInMillis()));
+        dateText.setText(formattedDate);
 
-        Log.i(TAG, "onResume: start time " + (startCalender.getTimeInMillis()));
-        Log.i(TAG, "onResume: end time " + (endCalendar.getTimeInMillis()));
+        if (isButtonClicked) {
+            formattedDate = formattedDate.replace(" ", "\n");
+            showHideFloatingDate(formattedDate);
+        }
 
         formatCustomUsageEvents
                 .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
@@ -307,5 +334,69 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         int mode = appOps.checkOpNoThrow(OPSTR_GET_USAGE_STATS, info.uid, getActivity()
                 .getApplicationContext().getPackageName());
         return mode == MODE_ALLOWED;
+    }
+
+    private void showHideFloatingDate(String text) {
+        if (floatingDate == null)
+            return;
+        floatingDate.setText(text);
+
+        floatingDate.setAlpha(0.0F);
+        floatingDate.setVisibility(View.VISIBLE);
+        floatingDate
+                .animate()
+                .alpha(1.0F)
+                .setDuration(250)
+                .setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animator) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animator) {
+                        new Handler().postDelayed(() -> {
+                            if (floatingDate != null) {
+                                floatingDate.setAlpha(1.0F);
+                                floatingDate
+                                        .animate()
+                                        .alpha(0.0F)
+                                        .setDuration(250)
+                                        .setListener(new Animator.AnimatorListener() {
+                                            @Override
+                                            public void onAnimationStart(Animator animator) {
+
+                                            }
+
+                                            @Override
+                                            public void onAnimationEnd(Animator animator) {
+                                                floatingDate.setVisibility(View.GONE);
+                                            }
+
+                                            @Override
+                                            public void onAnimationCancel(Animator animator) {
+
+                                            }
+
+                                            @Override
+                                            public void onAnimationRepeat(Animator animator) {
+
+                                            }
+                                        });
+                            }
+                        }, 1000);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animator) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animator) {
+
+                    }
+                })
+                .start();
     }
 }

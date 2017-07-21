@@ -23,7 +23,8 @@
 
     <include
         android:id="@+id/header_layout"
-        layout="@layout/recycler_top_layout" />
+        layout="@layout/recycler_top_layout"
+        android:elevation="4dp" />
 
     <RelativeLayout
         android:id="@+id/date_layout"
@@ -31,6 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:background="@color/colorPrimaryDark"
+        android:elevation="4dp"
         android:orientation="horizontal"
         android:paddingEnd="10dp"
         android:paddingStart="10dp">
@@ -77,9 +79,24 @@
         android:id="@+id/recyclerview_app_usage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/date_layout"
         android:layout_below="@id/header_layout"
         android:drawSelectorOnTop="true"
+        android:elevation="2dp"
         android:scrollbars="vertical" />
+
+    <TextView
+        android:id="@+id/floating_date_text"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        android:layout_centerInParent="true"
+        android:background="@drawable/ripple_mask"
+        android:backgroundTint="@color/colorPrimary"
+        android:elevation="4dp"
+        android:gravity="center"
+        android:padding="10dp"
+        android:textColor="@color/textWhite"
+        android:textSize="24sp"
+        android:visibility="gone"
+        tools:text="12\nJune" />
 
 </RelativeLayout>
