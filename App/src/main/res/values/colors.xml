@@ -10,5 +10,6 @@
     <color name="scrollbarBgGray">#FFAAAAAA</color>
     <color name="textWhite">#FFFFFFFF</color>
     <color name="textWhiteTransparent">#CCFFFFFF</color>
+    <color name="textDisabled">#88FFFFFF</color>
     <color name="colorAccentLight">#FFFFFFB0</color>
 </resources>

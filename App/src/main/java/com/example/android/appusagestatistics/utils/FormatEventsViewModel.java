@@ -259,7 +259,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
     public void setDisplayUsageEventsList(UsageStatsManager usageStatsManager,
                                           String[] excludePackages, long startTime, long endTime,
-                                          boolean isIconNeeded) {
+                                          boolean isIconNeeded, boolean isCachedOnly) {
 
         if (startTime >= endTime) {
             displayLiveData.setValue(null);
@@ -292,6 +292,15 @@ public class FormatEventsViewModel extends AndroidViewModel {
                     long newStartTime = eventsInDb.get(numberToRemove).endTime + 20;
 
                     Log.i("GAAH", "onPostExecute: new start time " + newStartTime);
+
+                    if (isCachedOnly) {
+                        for (DisplayEventEntity displayEventEntity : eventsInDb) {
+                            insertIconName(displayEventEntity, false);
+                        }
+                        displayLiveData.setValue(eventsInDb);
+                        return;
+                    }
+
                     if (newStartTime >= endTime) {
                         displayLiveData.setValue(eventsInDb);
                         return;

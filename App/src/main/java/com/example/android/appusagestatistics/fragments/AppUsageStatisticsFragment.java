@@ -23,8 +23,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -32,6 +32,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -47,7 +48,9 @@ import com.mikepenz.fastadapter.adapters.GenericItemAdapter;
 import com.turingtechnologies.materialscrollbar.DateAndTimeIndicator;
 import com.turingtechnologies.materialscrollbar.TouchScrollBar;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.BindArray;
@@ -60,18 +63,23 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
     @BindView(R.id.recyclerview_app_usage)
     protected RecyclerView mRecyclerView;
-    @BindView(R.id.header_time)
-    protected TextView headerTime;
     @BindView(R.id.header_usage)
     protected TextView headerUsage;
     @BindArray(R.array.exclude_packages)
     protected String[] excludePackages;
-
+    @BindView(R.id.date_next)
+    Button dateNext;
+    @BindView(R.id.date_previous)
+    Button datePrev;
+    @BindView(R.id.date_text)
+    TextView dateText;
     private UsageStatsManager mUsageStatsManager;
     private Unbinder unbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
     private MaterialDialog dialog;
-    private int dateOffset = 0;
+    private int mDateOffset = 0;
+    private boolean isJustNoOffset = false;
+    private SimpleDateFormat sdf = new SimpleDateFormat("d MMMM");
 
     /**
      * Use this factory method to create a new instance of
@@ -149,7 +157,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                                 formattedTime == null ?
                                         getResources().getString(R.string.no_usage) : formattedTime));
 
-                        if (dateOffset == 0 && mTotalAdapter.getItem(0) != null) {
+                        if (!isJustNoOffset && mDateOffset == 0 && mTotalAdapter.getItem(0) != null) {
                             int index = findItemInList(events, mTotalAdapter.getItem(1).getModel());
                             if (index > -1) {
                                 mTotalAdapter.removeModel(0);
@@ -158,40 +166,46 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                                 mTotalAdapter.addModel(0, events.get(i));
                             }
                         } else {
+                            isJustNoOffset = false;
+                            Log.i(TAG, "onViewCreated: clearing");
                             mTotalAdapter.clear();
                             mTotalAdapter.addModel(events);
                         }
                     }
                 });
+
+        datePrev.setOnClickListener(view -> {
+            mDateOffset -= 1;
+            if (!dateNext.isEnabled()) {
+                dateNext.setEnabled(true);
+                dateNext.setTextColor(ContextCompat
+                        .getColor(getActivity().getApplicationContext(), R.color.textWhite));
+            }
+            triggerEvents();
+        });
+        dateNext.setOnClickListener(view -> {
+            mDateOffset += 1;
+            if (mDateOffset > 0) {
+                mDateOffset = 0;
+                dateNext.setEnabled(false);
+                dateNext.setTextColor(ContextCompat
+                        .getColor(getActivity().getApplicationContext(), R.color.textDisabled));
+            } else {
+                if (mDateOffset == 0) {
+                    isJustNoOffset = true;
+                    dateNext.setEnabled(false);
+                    dateNext.setTextColor(ContextCompat
+                            .getColor(getActivity().getApplicationContext(), R.color.textDisabled));
+                }
+                triggerEvents();
+            }
+        });
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Calendar startCalender = Calendar.getInstance();
-        if (dateOffset < 0)
-            startCalender.add(Calendar.DATE, dateOffset);
-        startCalender.set(Calendar.HOUR, 0);
-        startCalender.set(Calendar.MINUTE, 0);
-        startCalender.set(Calendar.SECOND, 0);
-        startCalender.set(Calendar.MILLISECOND, 0);
-        startCalender.set(Calendar.AM_PM, Calendar.AM);
-
-
-        Calendar endCalendar = Calendar.getInstance();
-        if (dateOffset < 0)
-        endCalendar.add(Calendar.DATE, dateOffset);
-        endCalendar.set(Calendar.HOUR, 23);
-        endCalendar.set(Calendar.MINUTE, 59);
-        endCalendar.set(Calendar.SECOND, 59);
-        endCalendar.set(Calendar.MILLISECOND, 999);
-
-        Log.i(TAG, "onResume: start time " + (startCalender.getTimeInMillis()));
-        Log.i(TAG, "onResume: end time " + (endCalendar.getTimeInMillis()));
-
-        formatCustomUsageEvents
-                .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
-                        startCalender.getTimeInMillis(), endCalendar.getTimeInMillis(), true);
+        triggerEvents();
     }
 
     @Override
@@ -233,5 +247,34 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 return i;
         }
         return -1;
+    }
+
+    private void triggerEvents() {
+        Calendar startCalender = Calendar.getInstance();
+        if (mDateOffset < 0)
+            startCalender.add(Calendar.DATE, mDateOffset);
+        startCalender.set(Calendar.HOUR_OF_DAY, 0);
+        startCalender.set(Calendar.MINUTE, 0);
+        startCalender.set(Calendar.SECOND, 0);
+        startCalender.set(Calendar.MILLISECOND, 0);
+
+
+        Calendar endCalendar = Calendar.getInstance();
+        if (mDateOffset < 0)
+            endCalendar.add(Calendar.DATE, mDateOffset);
+        endCalendar.set(Calendar.HOUR_OF_DAY, 23);
+        endCalendar.set(Calendar.MINUTE, 59);
+        endCalendar.set(Calendar.SECOND, 59);
+        endCalendar.set(Calendar.MILLISECOND, 999);
+
+        dateText.setText(sdf.format(new Date(startCalender.getTimeInMillis())));
+
+        Log.i(TAG, "onResume: start time " + (startCalender.getTimeInMillis()));
+        Log.i(TAG, "onResume: end time " + (endCalendar.getTimeInMillis()));
+
+        formatCustomUsageEvents
+                .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
+                        startCalender.getTimeInMillis(), endCalendar.getTimeInMillis(), true,
+                        mDateOffset < 0);
     }
 }

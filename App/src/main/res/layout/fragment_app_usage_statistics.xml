@@ -44,7 +44,7 @@
             android:padding="4dp"
             android:textColor="@color/textWhite"
             android:textSize="16sp"
-            android:text="12 June" />
+            tools:text="12 June" />
 
         <Button
             android:id="@+id/date_previous"
@@ -67,8 +67,9 @@
             android:layout_marginStart="30dp"
             android:layout_toEndOf="@id/date_text"
             android:background="@drawable/button_ripple"
+            android:enabled="false"
             android:text="&gt;"
-            android:textColor="@color/textWhite"
+            android:textColor="@color/textDisabled"
             android:textSize="48dp" />
     </RelativeLayout>
 
