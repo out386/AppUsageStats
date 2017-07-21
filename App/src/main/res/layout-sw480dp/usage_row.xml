@@ -21,11 +21,12 @@
     android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:orientation="horizontal"
-    android:paddingRight="16dp">
+    android:paddingEnd="16dp">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_weight="3"
         android:gravity="center"
         android:padding="10dp">
 
@@ -34,11 +35,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/timeline_time_bg"
+            android:backgroundTint="@color/colorAccent"
             android:gravity="center"
-            android:padding="10dp"
+            android:minEms="40"
+            android:paddingBottom="8dp"
+            android:paddingEnd="10dp"
+            android:paddingStart="10dp"
+            android:paddingTop="8dp"
             android:textColor="@color/textBlack"
-            android:textSize="15sp"
-            tools:text="12:00:15 AM" />
+            android:textSize="14sp"
+            tools:text="12:50:15 AM" />
 
     </LinearLayout>
 
@@ -51,8 +57,9 @@
 
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="8"
         android:gravity="center"
         android:orientation="vertical"
         android:paddingBottom="20dp"
@@ -62,30 +69,30 @@
             android:id="@+id/app_icon"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:scaleType="centerInside"
             android:paddingBottom="5dp"
+            android:scaleType="centerInside"
             tools:src="@drawable/ic_default_app_launcher" />
 
         <TextView
             android:id="@+id/textview_package_name"
             style="@style/PackageNameFont"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingBottom="5dp"
             android:paddingTop="5dp"
             android:textColor="@color/textBlack"
-            android:textSize="20sp"
+            android:textSize="18sp"
             tools:text="Example Appname" />
 
         <TextView
             android:id="@+id/total_time"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingTop="5dp"
             android:textColor="@color/textDarkGray"
-            android:textSize="15sp"
+            android:textSize="14sp"
             tools:text="1 hour, 3 minutes, and 10 seconds" />
 
     </LinearLayout>

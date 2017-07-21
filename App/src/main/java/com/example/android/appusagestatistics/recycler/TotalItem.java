@@ -26,7 +26,7 @@ import butterknife.ButterKnife;
 
 public class TotalItem extends GenericAbstractItem<DisplayEventEntity, TotalItem, TotalItem.ViewHolder> {
     private static final ViewHolderFactory<? extends ViewHolder> FACTORY = new ItemFactory();
-    private DateFormat mDateFormat = new SimpleDateFormat("hh:mm:ss a", Locale.getDefault());
+    private DateFormat mDateFormat = new SimpleDateFormat("h:m:s a", Locale.getDefault());
 
     public TotalItem(DisplayEventEntity displayEventEntity) {
         super(displayEventEntity);
@@ -70,11 +70,11 @@ public class TotalItem extends GenericAbstractItem<DisplayEventEntity, TotalItem
     @Override
     public void unbindView(ViewHolder holder) {
         super.unbindView(holder);
-        /*holder.mTotalTime.setText(null);
+        holder.mTotalTime.setText(null);
         holder.mStartTime.setText(null);
         holder.mAppName.setText(null);
         if (holder.mAppIcon != null)
-            holder.mAppIcon.setImageDrawable(null);*/
+            holder.mAppIcon.setImageDrawable(null);
     }
 
     private static class ItemFactory implements ViewHolderFactory<ViewHolder> {

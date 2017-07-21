@@ -121,6 +121,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
         ScrollAdapter scrollAdapter = new ScrollAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+        mRecyclerView.setItemAnimator(null);
         mFastAdapter.withSelectable(true);
 
         mRecyclerView.setAdapter(scrollAdapter.wrap(mTotalAdapter.wrap(mFastAdapter)));
@@ -157,8 +158,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                             for (int i = index - 1; i >= 0; i--) {
                                 mTotalAdapter.addModel(0, events.get(i));
                             }
-
-                            mRecyclerView.smoothScrollToPosition(0);
                         } else {
                             mTotalAdapter.clear();
                             mTotalAdapter.addModel(events);
