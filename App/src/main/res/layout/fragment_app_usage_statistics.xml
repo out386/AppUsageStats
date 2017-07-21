@@ -81,7 +81,6 @@
         android:layout_height="match_parent"
         android:layout_below="@id/header_layout"
         android:drawSelectorOnTop="true"
-        android:elevation="2dp"
         android:scrollbars="vertical" />
 
     <TextView

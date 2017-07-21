@@ -95,6 +95,9 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private boolean isDateLayoutVisible = true;
     private SimpleDateFormat sdf = new SimpleDateFormat("d MMMM");
     private PackageManager pm;
+    private Handler mFloatingDateHandler;
+    private Runnable mFloatingDateRunnable;
+
 
     /**
      * Use this factory method to create a new instance of
@@ -235,6 +238,11 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                     isDateLayoutVisible = true;
                     dateLayout.animate().translationY(0).setDuration(250).start();
                 }
+                if (floatingDate != null && floatingDate.getVisibility() == View.VISIBLE && (dy < -10 || dy > 10)) {
+                    if (mFloatingDateHandler != null && mFloatingDateRunnable != null)
+                        mFloatingDateHandler.removeCallbacks(mFloatingDateRunnable);
+                    hideFloatingDate();
+                }
             }
         });
     }
@@ -355,36 +363,14 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
                     @Override
                     public void onAnimationEnd(Animator animator) {
-                        new Handler().postDelayed(() -> {
-                            if (floatingDate != null) {
-                                floatingDate.setAlpha(1.0F);
-                                floatingDate
-                                        .animate()
-                                        .alpha(0.0F)
-                                        .setDuration(250)
-                                        .setListener(new Animator.AnimatorListener() {
-                                            @Override
-                                            public void onAnimationStart(Animator animator) {
+                        if (mFloatingDateHandler == null)
+                            mFloatingDateHandler = new Handler();
 
-                                            }
-
-                                            @Override
-                                            public void onAnimationEnd(Animator animator) {
-                                                floatingDate.setVisibility(View.GONE);
-                                            }
-
-                                            @Override
-                                            public void onAnimationCancel(Animator animator) {
-
-                                            }
-
-                                            @Override
-                                            public void onAnimationRepeat(Animator animator) {
-
-                                            }
-                                        });
-                            }
-                        }, 1000);
+                        if (mFloatingDateRunnable == null) {
+                            mFloatingDateRunnable = () -> hideFloatingDate();
+                        }
+                        mFloatingDateHandler.removeCallbacks(mFloatingDateRunnable);
+                        mFloatingDateHandler.postDelayed(mFloatingDateRunnable, 1000);
                     }
 
                     @Override
@@ -398,5 +384,37 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                     }
                 })
                 .start();
+    }
+
+    private void hideFloatingDate() {
+        if (floatingDate != null) {
+            if (floatingDate.getVisibility() == View.GONE)
+                return;
+            floatingDate
+                    .animate()
+                    .alpha(0.0F)
+                    .setDuration(250)
+                    .setListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animator) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animator) {
+                            floatingDate.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animator) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animator) {
+
+                        }
+                    });
+        }
     }
 }
