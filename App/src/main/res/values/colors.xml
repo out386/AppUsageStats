@@ -6,6 +6,7 @@
     <color name="textBlack">#FF000000</color>
     <color name="textDarkGray">#FF777777</color>
     <color name="backgroundLightGray">#FFDDDDDD</color>
+    <color name="scrollbarBgGray">#FFAAAAAA</color>
     <color name="textWhite">#FFFFFFFF</color>
     <color name="textWhiteTransparent">#CCFFFFFF</color>
     <color name="colorAccentLight">#FFFFFFB0</color>

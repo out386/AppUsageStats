@@ -25,6 +25,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -37,6 +38,7 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.adapters.ScrollAdapter;
 import com.example.android.appusagestatistics.models.DisplayEventEntity;
 import com.example.android.appusagestatistics.recycler.TotalItem;
 import com.example.android.appusagestatistics.utils.DisplaySize;
@@ -44,6 +46,8 @@ import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
 import com.example.android.appusagestatistics.utils.Tools;
 import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.adapters.GenericItemAdapter;
+import com.turingtechnologies.materialscrollbar.DateAndTimeIndicator;
+import com.turingtechnologies.materialscrollbar.TouchScrollBar;
 
 import java.util.Calendar;
 import java.util.List;
@@ -70,8 +74,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private FormatEventsViewModel formatCustomUsageEvents;
     private MaterialDialog dialog;
     private Handler handler;
-    private GenericItemAdapter<DisplayEventEntity, TotalItem> mTotalAdapter;
-    private FastAdapter<TotalItem> mFastAdapter;
 
     /**
      * Use this factory method to create a new instance of
@@ -116,18 +118,24 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         handler = new Handler();
         mRecyclerView.scrollToPosition(0);
 
-        mFastAdapter = new FastAdapter<>();
-        mTotalAdapter = new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
+        FastAdapter<TotalItem> mFastAdapter = new FastAdapter<>();
+        GenericItemAdapter<DisplayEventEntity, TotalItem> mTotalAdapter =
+                new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
+        ScrollAdapter scrollAdapter = new ScrollAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mFastAdapter.withSelectable(true);
-        /*TouchScrollBar materialScrollBar = new TouchScrollBar(getActivity().getApplicationContext(),
+
+        mRecyclerView.setAdapter(scrollAdapter.wrap(mTotalAdapter.wrap(mFastAdapter)));
+
+        TouchScrollBar materialScrollBar = new TouchScrollBar(getActivity().getApplicationContext(),
                 mRecyclerView, true);
-        materialScrollBar.setHandleColour(ContextCompat.getColor(getActivity()
-                .getApplicationContext(), R.color.colorAccent));
-        materialScrollBar.addIndicator(new AlphabetIndicator(getActivity().
-                getApplicationContext()), true);*/
-        mRecyclerView.setAdapter(mTotalAdapter.wrap(mFastAdapter));
+        materialScrollBar.setHandleColourRes(R.color.colorAccent);
+        materialScrollBar.setBarColourRes(R.color.scrollbarBgGray);
+        materialScrollBar.addIndicator(new DateAndTimeIndicator(getActivity().
+                getApplicationContext(), false, false, false, true), true);
+
+
         formatCustomUsageEvents = ViewModelProviders
                 .of(this)
                 .get(FormatEventsViewModel.class);
