@@ -25,8 +25,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -123,7 +121,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
         ScrollAdapter scrollAdapter = new ScrollAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mFastAdapter.withSelectable(true);
 
         mRecyclerView.setAdapter(scrollAdapter.wrap(mTotalAdapter.wrap(mFastAdapter)));
@@ -168,12 +165,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                         }
                     }
                 });
-
-        headerTime.setOnClickListener(view -> {
-            mRecyclerView.scrollToPosition(30);
-            handler.postDelayed(() ->
-                    mRecyclerView.smoothScrollToPosition(0), 10);
-        });
     }
 
     @Override
