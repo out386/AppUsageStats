@@ -52,7 +52,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
     private Context mContext;
 
     public UsageListAdapter(AppUsageStatisticsFragment fragment) {
-        mContext = fragment.getContext();
+        mContext = fragment.getActivity().getApplicationContext();
         FormatEventsViewModel formatCustomUsageEvents = ViewModelProviders
                 .of(fragment)
                 .get(FormatEventsViewModel.class);

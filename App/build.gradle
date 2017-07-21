@@ -36,6 +36,12 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.7.0'
 
     compile 'com.afollestad.material-dialogs:core:0.9.4.5'
+
+    compile('com.mikepenz:fastadapter:2.1.5@aar') {
+        transitive = true
+    }
+    compile 'com.mikepenz:fastadapter-commons:2.1.0@aar'
+    compile 'com.turingtechnologies.materialscrollbar:lib:10.0.1'
 }
 
 android {

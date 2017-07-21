@@ -25,6 +25,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,11 +37,13 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.android.appusagestatistics.R;
-import com.example.android.appusagestatistics.adapters.UsageListAdapter;
 import com.example.android.appusagestatistics.models.DisplayEventEntity;
+import com.example.android.appusagestatistics.recycler.TotalItem;
 import com.example.android.appusagestatistics.utils.DisplaySize;
 import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
 import com.example.android.appusagestatistics.utils.Tools;
+import com.mikepenz.fastadapter.FastAdapter;
+import com.mikepenz.fastadapter.adapters.GenericItemAdapter;
 
 import java.util.Calendar;
 import java.util.List;
@@ -66,6 +70,8 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private FormatEventsViewModel formatCustomUsageEvents;
     private MaterialDialog dialog;
     private Handler handler;
+    private GenericItemAdapter<DisplayEventEntity, TotalItem> mTotalAdapter;
+    private FastAdapter<TotalItem> mFastAdapter;
 
     /**
      * Use this factory method to create a new instance of
@@ -80,7 +86,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (Build.VERSION.SDK_INT > 21)
             mUsageStatsManager = (UsageStatsManager) getActivity()
                     .getSystemService(Context.USAGE_STATS_SERVICE);
@@ -109,9 +114,20 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         super.onViewCreated(rootView, savedInstanceState);
 
         handler = new Handler();
-        UsageListAdapter mUsageListAdapter = new UsageListAdapter(this);
         mRecyclerView.scrollToPosition(0);
-        mRecyclerView.setAdapter(mUsageListAdapter);
+
+        mFastAdapter = new FastAdapter<>();
+        mTotalAdapter = new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mFastAdapter.withSelectable(true);
+        /*TouchScrollBar materialScrollBar = new TouchScrollBar(getActivity().getApplicationContext(),
+                mRecyclerView, true);
+        materialScrollBar.setHandleColour(ContextCompat.getColor(getActivity()
+                .getApplicationContext(), R.color.colorAccent));
+        materialScrollBar.addIndicator(new AlphabetIndicator(getActivity().
+                getApplicationContext()), true);*/
+        mRecyclerView.setAdapter(mTotalAdapter.wrap(mFastAdapter));
         formatCustomUsageEvents = ViewModelProviders
                 .of(this)
                 .get(FormatEventsViewModel.class);
@@ -127,6 +143,21 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                         headerUsage.setText(String.format(getResources().getString(R.string.total_usage),
                                 formattedTime == null ?
                                         getResources().getString(R.string.no_usage) : formattedTime));
+
+                        if (mTotalAdapter.getItem(0) != null) {
+                            int index = findItemInList(events, mTotalAdapter.getItem(1).getModel());
+                            if (index > -1) {
+                                mTotalAdapter.removeModel(0);
+                            }
+                            for (int i = index - 1; i >= 0; i--) {
+                                mTotalAdapter.addModel(0, events.get(i));
+                            }
+
+                            mRecyclerView.smoothScrollToPosition(0);
+                        } else {
+                            mTotalAdapter.clear();
+                            mTotalAdapter.addModel(events);
+                        }
                     }
                 });
 
@@ -195,5 +226,13 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
             totalUsage += event.endTime - event.startTime;
         }
         return totalUsage;
+    }
+
+    private int findItemInList(List<DisplayEventEntity> list, DisplayEventEntity event) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).appName.equals(event.appName) && list.get(i).startTime == event.startTime)
+                return i;
+        }
+        return -1;
     }
 }
