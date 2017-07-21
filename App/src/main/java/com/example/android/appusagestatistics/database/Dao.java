@@ -17,7 +17,8 @@ public interface Dao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertEvent(List<DisplayEventEntity> event);
 
-    @Query("SELECT * FROM events WHERE startTime >= :startTime AND endTime <= :endTime ORDER BY startTime DESC")
+    @Query("SELECT * FROM events WHERE startTime >= :startTime AND endTime <= :endTime AND "
+            + "endTime <> 0 ORDER BY startTime DESC")
     List<DisplayEventEntity> getEvents(long startTime, long endTime);
 
     @Delete
