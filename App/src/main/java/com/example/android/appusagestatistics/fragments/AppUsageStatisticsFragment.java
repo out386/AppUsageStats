@@ -16,11 +16,14 @@
 
 package com.example.android.appusagestatistics.fragments;
 
+import android.app.AppOpsManager;
 import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.LifecycleFragment;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -58,6 +61,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.OPSTR_GET_USAGE_STATS;
+
 public class AppUsageStatisticsFragment extends LifecycleFragment {
 
     private static final String TAG = AppUsageStatisticsFragment.class.getSimpleName();
@@ -80,6 +86,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private int mDateOffset = 0;
     private boolean isJustNoOffset = false;
     private SimpleDateFormat sdf = new SimpleDateFormat("d MMMM");
+    private PackageManager pm;
 
     /**
      * Use this factory method to create a new instance of
@@ -100,6 +107,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         else
             mUsageStatsManager = (UsageStatsManager) getActivity()
                     .getSystemService("usagestats");
+        pm = getActivity().getPackageManager();
     }
 
     @Override
@@ -148,10 +156,15 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         formatCustomUsageEvents
                 .getDisplayUsageEventsList()
                 .observe(this, events -> {
-                    if (events == null) {
+                    if (! checkForPermission()) {
                         Log.i(TAG, "The user may not have allowed access to apps usage.");
                         dialog = showDialog();
                     } else {
+                        if (events == null || events.size() == 0) {
+                            mTotalAdapter.clear();
+                            headerUsage.setText(getResources().getString(R.string.no_usage));
+                            return;
+                        }
                         String formattedTime = Tools.formatTotalTime(0, findTotalUsage(events), false);
                         headerUsage.setText(String.format(getResources().getString(R.string.total_usage),
                                 formattedTime == null ?
@@ -276,5 +289,23 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
                         startCalender.getTimeInMillis(), endCalendar.getTimeInMillis(), true,
                         mDateOffset < 0);
+    }
+
+    private boolean checkForPermission() {
+        AppOpsManager appOps = (AppOpsManager) getActivity()
+                .getApplicationContext()
+                .getSystemService(Context.APP_OPS_SERVICE);
+        ApplicationInfo info;
+        try {
+            info = pm.getApplicationInfo(getActivity()
+                    .getApplicationContext().getPackageName(), 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        int mode = appOps.checkOpNoThrow(OPSTR_GET_USAGE_STATS, info.uid, getActivity()
+                .getApplicationContext().getPackageName());
+        return mode == MODE_ALLOWED;
     }
 }
