@@ -71,7 +71,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     private Unbinder unbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
     private MaterialDialog dialog;
-    private Handler handler;
+    private int dateOffset = 0;
 
     /**
      * Use this factory method to create a new instance of
@@ -113,7 +113,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
 
-        handler = new Handler();
         mRecyclerView.scrollToPosition(0);
 
         FastAdapter<TotalItem> mFastAdapter = new FastAdapter<>();
@@ -150,7 +149,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                                 formattedTime == null ?
                                         getResources().getString(R.string.no_usage) : formattedTime));
 
-                        if (mTotalAdapter.getItem(0) != null) {
+                        if (dateOffset == 0 && mTotalAdapter.getItem(0) != null) {
                             int index = findItemInList(events, mTotalAdapter.getItem(1).getModel());
                             if (index > -1) {
                                 mTotalAdapter.removeModel(0);
@@ -169,28 +168,30 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     @Override
     public void onResume() {
         super.onResume();
-        Calendar cal = Calendar.getInstance();
-        //cal.add(Calendar.DATE, -1);
-        cal.set(Calendar.HOUR, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        cal.set(Calendar.AM_PM, Calendar.AM);
+        Calendar startCalender = Calendar.getInstance();
+        if (dateOffset < 0)
+            startCalender.add(Calendar.DATE, dateOffset);
+        startCalender.set(Calendar.HOUR, 0);
+        startCalender.set(Calendar.MINUTE, 0);
+        startCalender.set(Calendar.SECOND, 0);
+        startCalender.set(Calendar.MILLISECOND, 0);
+        startCalender.set(Calendar.AM_PM, Calendar.AM);
 
 
-        Calendar cal2 = Calendar.getInstance();
-        cal2.add(Calendar.DATE, -1);
-        cal2.set(Calendar.HOUR, 23);
-        cal2.set(Calendar.MINUTE, 59);
-        cal2.set(Calendar.SECOND, 59);
-        cal2.set(Calendar.MILLISECOND, 999);
+        Calendar endCalendar = Calendar.getInstance();
+        if (dateOffset < 0)
+        endCalendar.add(Calendar.DATE, dateOffset);
+        endCalendar.set(Calendar.HOUR, 23);
+        endCalendar.set(Calendar.MINUTE, 59);
+        endCalendar.set(Calendar.SECOND, 59);
+        endCalendar.set(Calendar.MILLISECOND, 999);
 
-        Log.i(TAG, "onResume: start time " + (cal.getTimeInMillis()));
-        //Log.i(TAG, "onResume: end time " + (cal2.getTimeInMillis()));
+        Log.i(TAG, "onResume: start time " + (startCalender.getTimeInMillis()));
+        Log.i(TAG, "onResume: end time " + (endCalendar.getTimeInMillis()));
 
         formatCustomUsageEvents
                 .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
-                        cal.getTimeInMillis(), System.currentTimeMillis(), true);
+                        startCalender.getTimeInMillis(), endCalendar.getTimeInMillis(), true);
     }
 
     @Override

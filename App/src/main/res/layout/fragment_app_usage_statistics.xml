@@ -21,15 +21,64 @@
     android:gravity="center_vertical"
     android:orientation="vertical">
 
-    <include layout="@layout/recycler_top_layout"
-        android:id="@+id/header_layout" />
+    <include
+        android:id="@+id/header_layout"
+        layout="@layout/recycler_top_layout" />
+
+    <RelativeLayout
+        android:id="@+id/date_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/colorPrimaryDark"
+        android:orientation="horizontal"
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp">
+
+
+        <TextView
+            android:id="@+id/date_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:padding="4dp"
+            android:textColor="@color/textWhite"
+            android:textSize="16sp"
+            android:text="12 June" />
+
+        <Button
+            android:id="@+id/date_previous"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="30dp"
+            android:layout_marginStart="30dp"
+            android:layout_toStartOf="@id/date_text"
+            android:background="@drawable/button_ripple"
+            android:text="&lt;"
+            android:textColor="@color/textWhite"
+            android:textSize="48dp" />
+
+        <Button
+            android:id="@+id/date_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="30dp"
+            android:layout_marginStart="30dp"
+            android:layout_toEndOf="@id/date_text"
+            android:background="@drawable/button_ripple"
+            android:text="&gt;"
+            android:textColor="@color/textWhite"
+            android:textSize="48dp" />
+    </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerview_app_usage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@id/date_layout"
+        android:layout_below="@id/header_layout"
         android:drawSelectorOnTop="true"
-        android:scrollbars="vertical"
-        android:layout_below="@id/header_layout"/>
+        android:scrollbars="vertical" />
 
 </RelativeLayout>
