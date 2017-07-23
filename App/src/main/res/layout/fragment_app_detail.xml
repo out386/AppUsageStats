@@ -1,5 +1,6 @@
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -12,14 +13,53 @@
             android:id="@+id/collapsing"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_scrollFlags="scroll|snap|enterAlways">
+            app:layout_scrollFlags="scroll|enterAlways">
 
             <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:elevation="4dp"
                 app:cardBackgroundColor="@color/colorPrimary"
-                app:cardCornerRadius="0dp" />
+                app:cardCornerRadius="0dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <lecho.lib.hellocharts.view.PieChartView
+                        android:id="@+id/detail_chart"
+                        android:layout_width="wrap_content"
+                        android:layout_height="200dp"
+                        android:layout_centerInParent="true"
+                        android:visibility="gone"
+                        tools:visibility="visible"/>
+
+                    <TextView
+                        android:id="@+id/detail_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"
+                        android:padding="15dp"
+                        android:textColor="@color/textBlack"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        tools:text="Sample App Name" />
+
+                    <TextView
+                        android:id="@+id/detail_usage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_centerHorizontal="true"
+                        android:padding="15dp"
+                        android:textColor="@color/textWhite"
+                        android:textSize="16sp"
+                        tools:text="1 hour, 2 minutes, and 10 seconds" />
+
+                </RelativeLayout>
+
+            </android.support.v7.widget.CardView>
 
         </android.support.design.widget.CollapsingToolbarLayout>
     </android.support.design.widget.AppBarLayout>

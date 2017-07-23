@@ -233,7 +233,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                             headerUsage.setText(getResources().getString(R.string.no_usage));
                             return;
                         }
-                        String formattedTime = Tools.formatTotalTime(0, findTotalUsage(events), false);
+                        String formattedTime = Tools.formatTotalTime(0, Tools.findTotalUsage(events), false);
                         headerUsage.setText(String.format(getResources().getString(R.string.total_usage),
                                 formattedTime == null ?
                                         getResources().getString(R.string.no_usage) : formattedTime));
@@ -287,16 +287,6 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
             w.setLayout(displaySize.width, w.getAttributes().height);
         }
         return d;
-    }
-
-    private long findTotalUsage(List<DisplayEventEntity> events) {
-        long totalUsage = 0;
-        for (DisplayEventEntity event : events) {
-            if (event.endTime == 0)
-                continue;
-            totalUsage += event.endTime - event.startTime;
-        }
-        return totalUsage;
     }
 
     private int findItemInList(List<DisplayEventEntity> list, DisplayEventEntity event) {

@@ -30,4 +30,7 @@
     <string name="hello_blank_fragment">Not implemented yet</string>
     <string name="total_usage">"Total usage: %s"</string>
     <string name="no_usage">"No usage"</string>
+    <string name="detail_this_app">This app</string>
+    <string name="detail_other_apps">Other apps</string>
+    <string name="detail_unused">Unused</string>
 </resources>

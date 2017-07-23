@@ -20,11 +20,6 @@ public interface Dao {
     @Query("SELECT * FROM events WHERE startTime >= :startTime AND endTime <= :endTime AND "
             + "endTime <> 0 ORDER BY startTime DESC")
     List<DisplayEventEntity> getEvents(long startTime, long endTime);
-
-    @Query("SELECT * FROM events WHERE startTime >= :startTime AND endTime <= :endTime AND "
-            + "endTime <> 0 AND appName = :appName ORDER BY startTime DESC")
-    List<DisplayEventEntity> getDetailEvents(long startTime, long endTime, String appName);
-
     @Delete
     void deleteEvent(DisplayEventEntity unstable);
 }

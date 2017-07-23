@@ -4,12 +4,20 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.view.Display;
 
+import com.example.android.appusagestatistics.models.AppFilteredEvents;
+import com.example.android.appusagestatistics.models.DisplayEventEntity;
+
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
+
+import lecho.lib.hellocharts.util.ChartUtils;
 
 /**
  * Created by j on 12/7/17.
@@ -110,5 +118,51 @@ public class Tools {
         }
 
         return formatted;
+    }
+
+    public static AppFilteredEvents getSpecificAppEvents(List<DisplayEventEntity> allEvents, String appName) {
+        AppFilteredEvents appFilteredEvents = new AppFilteredEvents();
+        for (DisplayEventEntity event : allEvents) {
+            if (appName.equals(event.appName))
+                appFilteredEvents.appEvents.add(event);
+            else
+                appFilteredEvents.otherEvents.add(event);
+        }
+        return appFilteredEvents;
+    }
+
+    public static long findTotalUsage(List<DisplayEventEntity> events) {
+        long totalUsage = 0;
+        for (DisplayEventEntity event : events) {
+            if (event.endTime == 0)
+                continue;
+            totalUsage += event.endTime - event.startTime;
+        }
+        return totalUsage;
+    }
+
+    public static int[] generateRandomColours(int count) {
+
+        final int COLOR_BLUE = Color.parseColor("#33B5E5");
+        final int COLOR_VIOLET = Color.parseColor("#AA66CC");
+        final int COLOR_ORANGE = Color.parseColor("#FFBB33");
+        final int COLOR_RED = Color.parseColor("#FF4444");
+
+        final int [] COLORS = new int[]{COLOR_BLUE, COLOR_VIOLET, COLOR_ORANGE, COLOR_RED};
+
+        int [] colours = new int[count];
+        int numberGenerated = 0;
+        while (numberGenerated <= count) {
+            colours[numberGenerated] = COLORS[(int)Math.round(Math.random() * (COLORS.length - 1))];
+            if (count >= 3 && count <= COLORS.length - 1 && numberGenerated != 0) {
+                int nextIndex;
+                if (numberGenerated + 1 < count)
+                    nextIndex = numberGenerated + 1;
+                else
+                    nextIndex = 0;
+            }
+            numberGenerated ++;
+        }
+        return colours;
     }
 }

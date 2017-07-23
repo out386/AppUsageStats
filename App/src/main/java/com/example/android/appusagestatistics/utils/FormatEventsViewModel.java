@@ -29,7 +29,7 @@ import java.util.List;
 public class FormatEventsViewModel extends AndroidViewModel {
 
     private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
-    private MutableLiveData<List<DisplayEventEntity>> appDetailLiveData = new MutableLiveData<>();
+    private MutableLiveData<List<DisplayEventEntity>> appCachedLiveData = new MutableLiveData<>();
     private Database db;
     private PackageManager pm;
 
@@ -200,7 +200,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
     }
 
     public LiveData<List<DisplayEventEntity>> getAppDetailEventsList() {
-        return appDetailLiveData;
+        return appCachedLiveData;
     }
 
     private void insertInDb(List<DisplayEventEntity> events) {
@@ -327,12 +327,12 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
 
     /*
-     * Return cached usages of appName from the db.
+     * Return cached usages from the db.
      */
-    public void setAppDetailEventsList(long startTime, long endTime, String appName) {
+    public void setCachedEventsList(long startTime, long endTime) {
 
         if (startTime >= endTime) {
-            appDetailLiveData.setValue(null);
+            appCachedLiveData.setValue(null);
             return;
         }
         if (db == null)
@@ -344,7 +344,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
             @Override
             protected List<DisplayEventEntity> doInBackground(Void... voids) {
-                return db.dao().getDetailEvents(startTime, endTime, appName);
+                return db.dao().getEvents(startTime, endTime);
             }
 
             @Override
@@ -356,7 +356,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
                 for (DisplayEventEntity displayEventEntity : eventsInDb) {
                     insertIconName(displayEventEntity, false);
                 }
-                appDetailLiveData.setValue(eventsInDb);
+                appCachedLiveData.setValue(eventsInDb);
 
                 super.onPostExecute(eventsInDb);
             }
