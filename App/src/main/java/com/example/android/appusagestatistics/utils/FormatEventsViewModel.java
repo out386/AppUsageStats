@@ -33,6 +33,12 @@ public class FormatEventsViewModel extends AndroidViewModel {
     private Database db;
     private PackageManager pm;
 
+
+    public int mDateOffset = 0;
+    public boolean isJustNoOffset = false;
+    public boolean isDateLayoutVisible = true;
+    public String formattedDate;
+
     public FormatEventsViewModel(Application application) {
         super(application);
     }
@@ -116,7 +122,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
                 copy.add(event);
             }
         }
-        Log.i("GAAH2", "mergeBgFg: Size " + copy.size());
+        //Log.i("GAAH2", "mergeBgFg: Size " + copy.size());
         return copy;
     }
 
@@ -251,7 +257,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
             protected void onPostExecute(Void aVoid) {
                 for (int i = merged.size() - 1; i >= 0; i--) {
                     eventsInDb.add(0, merged.get(i));
-                    Log.d("merge", "onPostExecute: number: " + i + " merged: " + merged.get(i).appName);
+                    //Log.d("merge", "onPostExecute: number: " + i + " merged: " + merged.get(i).appName);
                 }
                 displayLiveData.setValue(eventsInDb);
                 insertInDb(merged);
@@ -290,7 +296,7 @@ public class FormatEventsViewModel extends AndroidViewModel {
                     findEvents(usageStatsManager, excludePackages, startTime, endTime,
                             null, -1, isIconNeeded);
                 } else {
-                    for (int i = 0; i < 10 && i < eventsInDb.size(); i++) {
+                    for (int i = 0; i < 2 && i < eventsInDb.size(); i++) {
                         Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
                     }
 
@@ -298,26 +304,21 @@ public class FormatEventsViewModel extends AndroidViewModel {
                         numberToRemove = eventsInDb.size() - 1;
                     long newStartTime = eventsInDb.get(numberToRemove).endTime + 20;
 
-                    Log.i("GAAH", "onPostExecute: new start time " + newStartTime);
-
                     if (isCachedOnly) {
                         for (DisplayEventEntity displayEventEntity : eventsInDb) {
                             insertIconName(displayEventEntity, false);
                         }
                         displayLiveData.setValue(eventsInDb);
-                        super.onPostExecute(eventsInDb);
                         return;
                     }
 
                     if (newStartTime >= endTime) {
                         displayLiveData.setValue(eventsInDb);
-                        super.onPostExecute(eventsInDb);
                         return;
                     }
                     findEvents(usageStatsManager, excludePackages, newStartTime, endTime,
                             eventsInDb, numberToRemove, isIconNeeded);
                 }
-                super.onPostExecute(eventsInDb);
             }
         };
 
@@ -348,9 +349,9 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
             @Override
             protected void onPostExecute(List<DisplayEventEntity> eventsInDb) {
-                for (int i = 0; i < 5 && i < eventsInDb.size(); i++) {
-                    Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
-                }
+               // for (int i = 0; i < 5 && i < eventsInDb.size(); i++) {
+               //     Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
+               // }
 
                 for (DisplayEventEntity displayEventEntity : eventsInDb) {
                     insertIconName(displayEventEntity, false);

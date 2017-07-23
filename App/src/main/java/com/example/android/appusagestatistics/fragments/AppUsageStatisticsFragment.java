@@ -51,7 +51,6 @@ import com.example.android.appusagestatistics.utils.DisplaySize;
 import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
 import com.example.android.appusagestatistics.utils.Tools;
 import com.mikepenz.fastadapter.FastAdapter;
-import com.mikepenz.fastadapter.IAdapter;
 import com.mikepenz.fastadapter.adapters.GenericItemAdapter;
 import com.turingtechnologies.materialscrollbar.DateAndTimeIndicator;
 import com.turingtechnologies.materialscrollbar.TouchScrollBar;
@@ -90,15 +89,13 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     TextView floatingDate;
     private UsageStatsManager mUsageStatsManager;
     private Unbinder unbinder;
-    private FormatEventsViewModel formatCustomUsageEvents;
+    private FormatEventsViewModel formatEventsViewModel;
     private MaterialDialog dialog;
-    private int mDateOffset = 0;
-    private boolean isJustNoOffset = false;
-    private boolean isDateLayoutVisible = true;
     private SimpleDateFormat sdf = new SimpleDateFormat("d MMMM");
     private PackageManager pm;
     private Handler mFloatingDateHandler;
     private Runnable mFloatingDateRunnable;
+    private GenericItemAdapter<DisplayEventEntity, TotalItem> mTotalAdapter;
 
 
     /**
@@ -144,11 +141,9 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
 
-        mRecyclerView.scrollToPosition(0);
 
         FastAdapter<TotalItem> mFastAdapter = new FastAdapter<>();
-        GenericItemAdapter<DisplayEventEntity, TotalItem> mTotalAdapter =
-                new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
+        mTotalAdapter = new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
         ScrollAdapter scrollAdapter = new ScrollAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
         mRecyclerView.setItemAnimator(null);
@@ -156,8 +151,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
         mFastAdapter.withOnClickListener((v, adapter, item, position) -> {
             DisplayEventEntity entity = adapter.getItem(position).getModel();
-            Log.i(TAG, "onClick: " + entity.appName);
-            ((AppUsageStatisticsActivity) getActivity()).showDetail(entity.appName, mDateOffset);
+            ((AppUsageStatisticsActivity) getActivity()).showDetail(entity.appName, formatEventsViewModel.mDateOffset);
             return false;
         });
 
@@ -171,46 +165,14 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
                 getApplicationContext(), false, false, false, true), true);
 
 
-        formatCustomUsageEvents = ViewModelProviders
+        formatEventsViewModel = ViewModelProviders
                 .of(this)
                 .get(FormatEventsViewModel.class);
 
-        formatCustomUsageEvents
-                .getDisplayUsageEventsList()
-                .observe(this, events -> {
-                    if (!checkForPermission()) {
-                        Log.i(TAG, "The user may not have allowed access to apps usage.");
-                        dialog = showDialog();
-                    } else {
-                        if (events == null || events.size() == 0) {
-                            mTotalAdapter.clear();
-                            headerUsage.setText(getResources().getString(R.string.no_usage));
-                            return;
-                        }
-                        String formattedTime = Tools.formatTotalTime(0, findTotalUsage(events), false);
-                        headerUsage.setText(String.format(getResources().getString(R.string.total_usage),
-                                formattedTime == null ?
-                                        getResources().getString(R.string.no_usage) : formattedTime));
-
-                        if (!isJustNoOffset && mDateOffset == 0 && mTotalAdapter.getItem(0) != null) {
-                            int index = findItemInList(events, mTotalAdapter.getItem(1).getModel());
-                            if (index > -1) {
-                                mTotalAdapter.removeModel(0);
-                            }
-                            for (int i = index - 1; i >= 0; i--) {
-                                mTotalAdapter.addModel(0, events.get(i));
-                            }
-                        } else {
-                            isJustNoOffset = false;
-                            Log.i(TAG, "onViewCreated: clearing");
-                            mTotalAdapter.clear();
-                            mTotalAdapter.addModel(events);
-                        }
-                    }
-                });
+        dateText.setText(formatEventsViewModel.formattedDate);
 
         datePrev.setOnClickListener(view -> {
-            mDateOffset -= 1;
+            formatEventsViewModel.mDateOffset -= 1;
             if (!dateNext.isEnabled()) {
                 dateNext.setEnabled(true);
                 dateNext.setTextColor(ContextCompat
@@ -219,15 +181,15 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
             triggerEvents(true);
         });
         dateNext.setOnClickListener(view -> {
-            mDateOffset += 1;
-            if (mDateOffset > 0) {
-                mDateOffset = 0;
+            formatEventsViewModel.mDateOffset += 1;
+            if (formatEventsViewModel.mDateOffset > 0) {
+                formatEventsViewModel.mDateOffset = 0;
                 dateNext.setEnabled(false);
                 dateNext.setTextColor(ContextCompat
                         .getColor(getActivity().getApplicationContext(), R.color.textDisabled));
             } else {
-                if (mDateOffset == 0) {
-                    isJustNoOffset = true;
+                if (formatEventsViewModel.mDateOffset == 0) {
+                    formatEventsViewModel.isJustNoOffset = true;
                     dateNext.setEnabled(false);
                     dateNext.setTextColor(ContextCompat
                             .getColor(getActivity().getApplicationContext(), R.color.textDisabled));
@@ -240,11 +202,11 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (isDateLayoutVisible && dy > 2) {
-                    isDateLayoutVisible = false;
+                if (formatEventsViewModel.isDateLayoutVisible && dy > 2) {
+                    formatEventsViewModel.isDateLayoutVisible = false;
                     dateLayout.animate().translationY(dateLayout.getHeight()).setDuration(250).start();
-                } else if (!isDateLayoutVisible && dy < -2) {
-                    isDateLayoutVisible = true;
+                } else if (!formatEventsViewModel.isDateLayoutVisible && dy < -2) {
+                    formatEventsViewModel.isDateLayoutVisible = true;
                     dateLayout.animate().translationY(0).setDuration(250).start();
                 }
                 if (floatingDate != null && floatingDate.getVisibility() == View.VISIBLE && (dy < -10 || dy > 10)) {
@@ -259,7 +221,48 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
     @Override
     public void onResume() {
         super.onResume();
-        triggerEvents(false);
+
+        formatEventsViewModel
+                .getDisplayUsageEventsList()
+                .observe(this, events -> {
+                    if (!checkForPermission()) {
+                        dialog = showDialog();
+                    } else {
+                        if (events == null || events.size() == 0) {
+                            mTotalAdapter.clear();
+                            headerUsage.setText(getResources().getString(R.string.no_usage));
+                            return;
+                        }
+                        String formattedTime = Tools.formatTotalTime(0, findTotalUsage(events), false);
+                        headerUsage.setText(String.format(getResources().getString(R.string.total_usage),
+                                formattedTime == null ?
+                                        getResources().getString(R.string.no_usage) : formattedTime));
+
+                        if (!formatEventsViewModel.isJustNoOffset && formatEventsViewModel.mDateOffset == 0 && mTotalAdapter.getItem(0) != null) {
+                            int index = findItemInList(events, mTotalAdapter.getItem(1).getModel());
+                            if (index > -1) {
+                                mTotalAdapter.removeModel(0);
+                            }
+                            for (int i = index - 1; i >= 0; i--) {
+                                mTotalAdapter.addModel(0, events.get(i));
+                            }
+                        } else {
+                            formatEventsViewModel.isJustNoOffset = false;
+                            Log.d(TAG, "onViewCreated: clearing");
+                            mTotalAdapter.clear();
+                            mTotalAdapter.addModel(events);
+                        }
+                    }
+                });
+
+        if (formatEventsViewModel.mDateOffset < 0) {
+            if (!dateNext.isEnabled()) {
+                dateNext.setEnabled(true);
+                dateNext.setTextColor(ContextCompat
+                        .getColor(getActivity().getApplicationContext(), R.color.textWhite));
+            }
+        } else
+            triggerEvents(false);
     }
 
     @Override
@@ -267,6 +270,7 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         super.onPause();
         if (dialog != null)
             dialog.dismiss();
+        formatEventsViewModel.getDisplayUsageEventsList().removeObservers(this);
     }
 
     private MaterialDialog showDialog() {
@@ -305,8 +309,8 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
     private void triggerEvents(boolean isButtonClicked) {
         Calendar startCalender = Calendar.getInstance();
-        if (mDateOffset < 0)
-            startCalender.add(Calendar.DATE, mDateOffset);
+        if (formatEventsViewModel.mDateOffset < 0)
+            startCalender.add(Calendar.DATE, formatEventsViewModel.mDateOffset);
         startCalender.set(Calendar.HOUR_OF_DAY, 0);
         startCalender.set(Calendar.MINUTE, 0);
         startCalender.set(Calendar.SECOND, 0);
@@ -314,14 +318,15 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
 
         Calendar endCalendar = Calendar.getInstance();
-        if (mDateOffset < 0)
-            endCalendar.add(Calendar.DATE, mDateOffset);
+        if (formatEventsViewModel.mDateOffset < 0)
+            endCalendar.add(Calendar.DATE, formatEventsViewModel.mDateOffset);
         endCalendar.set(Calendar.HOUR_OF_DAY, 23);
         endCalendar.set(Calendar.MINUTE, 59);
         endCalendar.set(Calendar.SECOND, 59);
         endCalendar.set(Calendar.MILLISECOND, 999);
 
         String formattedDate = sdf.format(new Date(startCalender.getTimeInMillis()));
+        formatEventsViewModel.formattedDate = formattedDate;
         dateText.setText(formattedDate);
 
         if (isButtonClicked) {
@@ -329,10 +334,10 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
             showHideFloatingDate(formattedDate);
         }
 
-        formatCustomUsageEvents
+        formatEventsViewModel
                 .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
                         startCalender.getTimeInMillis(), endCalendar.getTimeInMillis(), true,
-                        mDateOffset < 0);
+                        formatEventsViewModel.mDateOffset < 0);
     }
 
     private boolean checkForPermission() {

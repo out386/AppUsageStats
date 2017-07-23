@@ -1,21 +1,16 @@
 package com.example.android.appusagestatistics.fragments;
 
 
-import android.app.usage.UsageStatsManager;
 import android.arch.lifecycle.LifecycleFragment;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.ScrollAdapter;
 import com.example.android.appusagestatistics.models.DisplayEventEntity;
@@ -28,26 +23,22 @@ import com.turingtechnologies.materialscrollbar.DateAndTimeIndicator;
 import com.turingtechnologies.materialscrollbar.TouchScrollBar;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-import butterknife.BindArray;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
 public class AppDetailFragment extends LifecycleFragment {
 
+    private static final String KEY_APP_NAME = "appName";
+    private static final String KEY_DATE_OFFSET = "dateOffset";
     @BindView(R.id.recyclerview_app_detail)
     RecyclerView mRecyclerView;
-
     private Unbinder mUnbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
     private String mAppName;
     private int mDateOffset;
-
-    private static final String KEY_APP_NAME=  "appName";
-    private static final String KEY_DATE_OFFSET=  "dateOffset";
 
     public static AppDetailFragment newInstance(String appName, int dateOffset) {
         Bundle bundle = new Bundle();
@@ -106,24 +97,24 @@ public class AppDetailFragment extends LifecycleFragment {
         formatCustomUsageEvents
                 .getAppDetailEventsList()
                 .observe(this, events -> {
-                        if (events == null || events.size() == 0) {
-                            mTotalAdapter.clear();
-                            return;
-                        }
-                        String formattedTime = Tools.formatTotalTime(0, findTotalUsage(events), false);
+                    if (events == null || events.size() == 0) {
+                        mTotalAdapter.clear();
+                        return;
+                    }
+                    String formattedTime = Tools.formatTotalTime(0, findTotalUsage(events), false);
 
-                        if (mTotalAdapter.getItem(0) != null) {
-                            int index = findItemInList(events, mTotalAdapter.getItem(1).getModel());
-                            if (index > -1) {
-                                mTotalAdapter.removeModel(0);
-                            }
-                            for (int i = index - 1; i >= 0; i--) {
-                                mTotalAdapter.addModel(0, events.get(i));
-                            }
-                        } else {
-                            mTotalAdapter.clear();
-                            mTotalAdapter.addModel(events);
+                    if (mTotalAdapter.getItem(0) != null) {
+                        int index = findItemInList(events, mTotalAdapter.getItem(1).getModel());
+                        if (index > -1) {
+                            mTotalAdapter.removeModel(0);
                         }
+                        for (int i = index - 1; i >= 0; i--) {
+                            mTotalAdapter.addModel(0, events.get(i));
+                        }
+                    } else {
+                        mTotalAdapter.clear();
+                        mTotalAdapter.addModel(events);
+                    }
                 });
 
         triggerEvents();
