@@ -18,16 +18,15 @@ package com.example.android.appusagestatistics.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 
-import com.example.android.appusagestatistics.fragments.AppUsageStatisticsFragment;
 import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.fragments.AppDetailFragment;
 import com.example.android.appusagestatistics.fragments.ViewPagerFragment;
 import com.example.android.appusagestatistics.services.PopulateDatabaseService;
 
-/**
- * Launcher Activity for the App Usage Statistics sample app.
- */
 public class AppUsageStatisticsActivity extends AppCompatActivity {
 
     @Override
@@ -35,13 +34,24 @@ public class AppUsageStatisticsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_usage_statistics);
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new ViewPagerFragment())
-                    .commit();
+            changeFragment(ViewPagerFragment.newInstance());
         }
 
         Intent intent = new Intent(this, PopulateDatabaseService.class);
         stopService(intent);
         startService(intent);
+    }
+
+    private void changeFragment(Fragment fragment) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        if (fragment instanceof AppDetailFragment)
+            transaction.addToBackStack(null);
+
+        transaction.replace(R.id.container, fragment)
+                .commit();
+    }
+
+    public void showDetail(String appName, int dateOffset) {
+        changeFragment(AppDetailFragment.newInstance(appName, dateOffset));
     }
 }

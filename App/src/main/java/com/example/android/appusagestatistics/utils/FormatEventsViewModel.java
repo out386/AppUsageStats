@@ -29,6 +29,7 @@ import java.util.List;
 public class FormatEventsViewModel extends AndroidViewModel {
 
     private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
+    private MutableLiveData<List<DisplayEventEntity>> appDetailLiveData = new MutableLiveData<>();
     private Database db;
     private PackageManager pm;
 
@@ -192,6 +193,10 @@ public class FormatEventsViewModel extends AndroidViewModel {
         return displayLiveData;
     }
 
+    public LiveData<List<DisplayEventEntity>> getAppDetailEventsList() {
+        return appDetailLiveData;
+    }
+
     private void insertInDb(List<DisplayEventEntity> events) {
         if (db == null)
             return;
@@ -300,16 +305,58 @@ public class FormatEventsViewModel extends AndroidViewModel {
                             insertIconName(displayEventEntity, false);
                         }
                         displayLiveData.setValue(eventsInDb);
+                        super.onPostExecute(eventsInDb);
                         return;
                     }
 
                     if (newStartTime >= endTime) {
                         displayLiveData.setValue(eventsInDb);
+                        super.onPostExecute(eventsInDb);
                         return;
                     }
                     findEvents(usageStatsManager, excludePackages, newStartTime, endTime,
                             eventsInDb, numberToRemove, isIconNeeded);
                 }
+                super.onPostExecute(eventsInDb);
+            }
+        };
+
+        populateList.execute();
+    }
+
+
+    /*
+     * Return cached usages of appName from the db.
+     */
+    public void setAppDetailEventsList(long startTime, long endTime, String appName) {
+
+        if (startTime >= endTime) {
+            appDetailLiveData.setValue(null);
+            return;
+        }
+        if (db == null)
+            db = Room.databaseBuilder(getApplication(), Database.class, "eventsDb").build();
+        if (pm == null)
+            pm = getApplication().getPackageManager();
+
+        AsyncTask<Void, Void, List<DisplayEventEntity>> populateList = new AsyncTask<Void, Void, List<DisplayEventEntity>>() {
+
+            @Override
+            protected List<DisplayEventEntity> doInBackground(Void... voids) {
+                return db.dao().getDetailEvents(startTime, endTime, appName);
+            }
+
+            @Override
+            protected void onPostExecute(List<DisplayEventEntity> eventsInDb) {
+                for (int i = 0; i < 5 && i < eventsInDb.size(); i++) {
+                    Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
+                }
+
+                for (DisplayEventEntity displayEventEntity : eventsInDb) {
+                    insertIconName(displayEventEntity, false);
+                }
+                appDetailLiveData.setValue(eventsInDb);
+
                 super.onPostExecute(eventsInDb);
             }
         };

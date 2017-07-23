@@ -41,30 +41,38 @@ public class AppDetailFragment extends LifecycleFragment {
     @BindView(R.id.recyclerview_app_detail)
     RecyclerView mRecyclerView;
 
-    @BindArray(R.array.exclude_packages)
-    String[] excludePackages;
-
-    Unbinder unbinder;
-
+    private Unbinder mUnbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
-    private MaterialDialog dialog;
+    private String mAppName;
+    private int mDateOffset;
 
-    private UsageStatsManager mUsageStatsManager;
+    private static final String KEY_APP_NAME=  "appName";
+    private static final String KEY_DATE_OFFSET=  "dateOffset";
 
-    public static AppDetailFragment newInstance() {
-        return new AppDetailFragment();
+    public static AppDetailFragment newInstance(String appName, int dateOffset) {
+        Bundle bundle = new Bundle();
+        bundle.putString(KEY_APP_NAME, appName);
+        bundle.putInt(KEY_DATE_OFFSET, dateOffset);
+        AppDetailFragment fragment = new AppDetailFragment();
+        fragment.setArguments(bundle);
+        return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            mAppName = bundle.getString(KEY_APP_NAME);
+            mDateOffset = bundle.getInt(KEY_DATE_OFFSET);
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_app_detail, container, false);
-        unbinder = ButterKnife.bind(this, v);
+        mUnbinder = ButterKnife.bind(this, v);
         return v;
     }
 
@@ -72,17 +80,14 @@ public class AppDetailFragment extends LifecycleFragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-
         mRecyclerView.scrollToPosition(0);
-        mUsageStatsManager = (UsageStatsManager) getActivity()
-                .getSystemService(Context.USAGE_STATS_SERVICE);
+
         FastAdapter<TotalItem> mFastAdapter = new FastAdapter<>();
         GenericItemAdapter<DisplayEventEntity, TotalItem> mTotalAdapter =
                 new GenericItemAdapter<>(TotalItem.class, DisplayEventEntity.class);
         ScrollAdapter scrollAdapter = new ScrollAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
         mRecyclerView.setItemAnimator(null);
-        mFastAdapter.withSelectable(true);
 
         mRecyclerView.setAdapter(scrollAdapter.wrap(mTotalAdapter.wrap(mFastAdapter)));
 
@@ -99,7 +104,7 @@ public class AppDetailFragment extends LifecycleFragment {
                 .get(FormatEventsViewModel.class);
 
         formatCustomUsageEvents
-                .getDisplayUsageEventsList()
+                .getAppDetailEventsList()
                 .observe(this, events -> {
                         if (events == null || events.size() == 0) {
                             mTotalAdapter.clear();
@@ -120,18 +125,14 @@ public class AppDetailFragment extends LifecycleFragment {
                             mTotalAdapter.addModel(events);
                         }
                 });
+
+        triggerEvents();
     }
 
     @Override
     public void onDestroyView() {
-        unbinder.unbind();
+        mUnbinder.unbind();
         super.onDestroyView();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        triggerEvents(false);
     }
 
     private long findTotalUsage(List<DisplayEventEntity> events) {
@@ -152,8 +153,10 @@ public class AppDetailFragment extends LifecycleFragment {
         return -1;
     }
 
-    private void triggerEvents(boolean isButtonClicked) {
+    private void triggerEvents() {
         Calendar startCalender = Calendar.getInstance();
+        if (mDateOffset < 0)
+            startCalender.add(Calendar.DATE, mDateOffset);
         startCalender.set(Calendar.HOUR_OF_DAY, 0);
         startCalender.set(Calendar.MINUTE, 0);
         startCalender.set(Calendar.SECOND, 0);
@@ -161,14 +164,15 @@ public class AppDetailFragment extends LifecycleFragment {
 
 
         Calendar endCalendar = Calendar.getInstance();
+        if (mDateOffset < 0)
+            endCalendar.add(Calendar.DATE, mDateOffset);
         endCalendar.set(Calendar.HOUR_OF_DAY, 23);
         endCalendar.set(Calendar.MINUTE, 59);
         endCalendar.set(Calendar.SECOND, 59);
         endCalendar.set(Calendar.MILLISECOND, 999);
 
         formatCustomUsageEvents
-                .setDisplayUsageEventsList(mUsageStatsManager, excludePackages,
-                        startCalender.getTimeInMillis(), endCalendar.getTimeInMillis(), true,
-                        false);
+                .setAppDetailEventsList(startCalender.getTimeInMillis(),
+                        endCalendar.getTimeInMillis(), mAppName);
     }
 }

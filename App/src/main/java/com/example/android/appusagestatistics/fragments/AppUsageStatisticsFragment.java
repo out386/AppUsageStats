@@ -43,6 +43,7 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.android.appusagestatistics.R;
+import com.example.android.appusagestatistics.activities.AppUsageStatisticsActivity;
 import com.example.android.appusagestatistics.adapters.ScrollAdapter;
 import com.example.android.appusagestatistics.models.DisplayEventEntity;
 import com.example.android.appusagestatistics.recycler.TotalItem;
@@ -50,6 +51,7 @@ import com.example.android.appusagestatistics.utils.DisplaySize;
 import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
 import com.example.android.appusagestatistics.utils.Tools;
 import com.mikepenz.fastadapter.FastAdapter;
+import com.mikepenz.fastadapter.IAdapter;
 import com.mikepenz.fastadapter.adapters.GenericItemAdapter;
 import com.turingtechnologies.materialscrollbar.DateAndTimeIndicator;
 import com.turingtechnologies.materialscrollbar.TouchScrollBar;
@@ -151,6 +153,13 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
         mRecyclerView.setItemAnimator(null);
         mFastAdapter.withSelectable(true);
+
+        mFastAdapter.withOnClickListener((v, adapter, item, position) -> {
+            DisplayEventEntity entity = adapter.getItem(position).getModel();
+            Log.i(TAG, "onClick: " + entity.appName);
+            ((AppUsageStatisticsActivity) getActivity()).showDetail(entity.appName, mDateOffset);
+            return false;
+        });
 
         mRecyclerView.setAdapter(scrollAdapter.wrap(mTotalAdapter.wrap(mFastAdapter)));
 
@@ -402,7 +411,9 @@ public class AppUsageStatisticsFragment extends LifecycleFragment {
 
                         @Override
                         public void onAnimationEnd(Animator animator) {
-                            floatingDate.setVisibility(View.GONE);
+                            // This became null once. TODO: Look into this
+                            if (floatingDate != null)
+                                floatingDate.setVisibility(View.GONE);
                         }
 
                         @Override

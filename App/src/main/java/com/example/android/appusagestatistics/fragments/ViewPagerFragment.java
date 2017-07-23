@@ -32,19 +32,17 @@ public class ViewPagerFragment extends Fragment {
     protected String[] tabTitles;
 
     private Unbinder unbinder;
-    private View rootView;
 
-    public ViewPagerFragment() {
-        // Required empty public constructor
+
+    public static ViewPagerFragment newInstance() {
+        return new ViewPagerFragment();
     }
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.i("meh", "onCreateView: ");
         // Inflate the layout for this fragment
-        rootView = inflater.inflate(R.layout.fragment_viewpager, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_viewpager, container, false);
         unbinder = ButterKnife.bind(this, rootView);
 
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
