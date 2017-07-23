@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.util.Log;
 import android.view.Display;
 
 import com.example.android.appusagestatistics.models.AppFilteredEvents;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.TimeZone;
 
 import lecho.lib.hellocharts.util.ChartUtils;
+
+import static com.github.mikephil.charting.utils.ColorTemplate.rgb;
 
 /**
  * Created by j on 12/7/17.
@@ -164,5 +167,34 @@ public class Tools {
             numberGenerated ++;
         }
         return colours;
+    }
+
+    public static ArrayList<Integer> getColours(int count) {
+        final int[] LIBERTY_COLORS = new int[]{Color.rgb(207, 248, 246), Color.rgb(148, 212, 212), Color.rgb(136, 180, 187), Color.rgb(118, 174, 175), Color.rgb(42, 109, 130)};
+        final int[] JOYFUL_COLORS = new int[]{Color.rgb(217, 80, 138), Color.rgb(254, 149, 7), Color.rgb(254, 247, 120), Color.rgb(106, 167, 134), Color.rgb(53, 194, 209)};
+        //final int[] PASTEL_COLORS = new int[]{Color.rgb(64, 89, 128), Color.rgb(149, 165, 124), Color.rgb(217, 184, 162), Color.rgb(191, 134, 134), Color.rgb(179, 48, 80)};
+        final int[] COLORFUL_COLORS = new int[]{Color.rgb(193, 37, 82), Color.rgb(255, 102, 0), Color.rgb(245, 199, 0), Color.rgb(106, 150, 31), Color.rgb(179, 100, 53)};
+        final int[] VORDIPLOM_COLORS = new int[]{Color.rgb(192, 255, 140), Color.rgb(255, 247, 140), Color.rgb(255, 208, 140), Color.rgb(140, 234, 255), Color.rgb(255, 140, 157)};
+
+        ArrayList<Integer> colors = new ArrayList<>();
+        ArrayList<Integer> finalColors = new ArrayList<>();
+        for (int c : VORDIPLOM_COLORS)
+            colors.add(c);
+        for (int c : JOYFUL_COLORS)
+            colors.add(c);
+        for (int c : COLORFUL_COLORS)
+            colors.add(c);
+        for (int c : LIBERTY_COLORS)
+            colors.add(c);
+        /*for (int c : PASTEL_COLORS)
+            colors.add(c);*/
+
+        if (colors.size() < count)
+            return colors;
+
+        for (int i = 0; i <= count; i++) {
+            finalColors.add(colors.get((int) (Math.random() * colors.size())));
+        }
+        return finalColors;
     }
 }

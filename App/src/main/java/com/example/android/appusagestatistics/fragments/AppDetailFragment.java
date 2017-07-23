@@ -3,15 +3,21 @@ package com.example.android.appusagestatistics.fragments;
 
 import android.arch.lifecycle.LifecycleFragment;
 import android.arch.lifecycle.ViewModelProviders;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.ScrollAdapter;
@@ -20,6 +26,15 @@ import com.example.android.appusagestatistics.models.DisplayEventEntity;
 import com.example.android.appusagestatistics.recycler.TotalItem;
 import com.example.android.appusagestatistics.utils.FormatEventsViewModel;
 import com.example.android.appusagestatistics.utils.Tools;
+import com.github.mikephil.charting.animation.Easing;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.adapters.GenericItemAdapter;
 import com.turingtechnologies.materialscrollbar.DateAndTimeIndicator;
@@ -32,10 +47,6 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
-import lecho.lib.hellocharts.model.PieChartData;
-import lecho.lib.hellocharts.model.SliceValue;
-import lecho.lib.hellocharts.util.ChartUtils;
-import lecho.lib.hellocharts.view.PieChartView;
 
 public class AppDetailFragment extends LifecycleFragment {
 
@@ -45,17 +56,12 @@ public class AppDetailFragment extends LifecycleFragment {
     @BindView(R.id.recyclerview_app_detail)
     RecyclerView mRecyclerView;
     @BindView(R.id.detail_chart)
-    PieChartView chart;
-    @BindView(R.id.detail_name)
-    TextView detailName;
-    @BindView(R.id.detail_usage)
-    TextView detailUsage;
+    PieChart mChart;
 
     private Unbinder mUnbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
     private String mAppName;
     private int mDateOffset;
-    private PieChartData data;
 
     public static AppDetailFragment newInstance(String appName, int dateOffset) {
         Bundle bundle = new Bundle();
@@ -106,9 +112,6 @@ public class AppDetailFragment extends LifecycleFragment {
         materialScrollBar.addIndicator(new DateAndTimeIndicator(getActivity().
                 getApplicationContext(), false, false, false, true), true);
 
-        detailName.setText(mAppName);
-
-
         formatCustomUsageEvents = ViewModelProviders
                 .of(this)
                 .get(FormatEventsViewModel.class);
@@ -119,16 +122,8 @@ public class AppDetailFragment extends LifecycleFragment {
                     AppFilteredEvents appFilteredEvents = Tools.getSpecificAppEvents(allEvents, mAppName);
                     if (appFilteredEvents.appEvents == null || appFilteredEvents.appEvents.size() == 0) {
                         mTotalAdapter.clear();
-                        detailUsage.setText(String.format(getResources().getString(R.string.total_usage),
-                                        getResources().getString(R.string.no_usage)));
                         return;
                     }
-
-                    long totalUsage = Tools.findTotalUsage(appFilteredEvents.appEvents);
-                    String formattedTime = Tools.formatTotalTime(0, totalUsage, false);
-                    detailUsage.setText(String.format(getResources().getString(R.string.total_usage),
-                            formattedTime == null ?
-                                    getResources().getString(R.string.no_usage) : formattedTime));
 
                     setPie(appFilteredEvents);
 
@@ -195,36 +190,99 @@ public class AppDetailFragment extends LifecycleFragment {
         float dayRemainingPercent = (float) ((TIME_DAY - TIME_USED_OTHERS - TIME_USED_THIS) / TIME_DAY * 100);
         float thisPercent = (float) (TIME_USED_THIS / TIME_DAY * 100);
 
-        Log.i("huh", "generateData: " + otherPercent);
-        Log.i("huh", "generateData: " + dayRemainingPercent);
-        Log.i("huh", "generateData: " + thisPercent);
-        Log.i("huh", "generateData: " + (otherPercent + thisPercent + dayRemainingPercent));
+        // Anything less than 1 is invisible on the chart
+        if (otherPercent < 1)
+            otherPercent = 1;
+        if (thisPercent < 1)
+            thisPercent = 1;
 
-        List<SliceValue> values = new ArrayList<>();
-
-        SliceValue sliceValue = new SliceValue(otherPercent, ChartUtils.pickColor());
-        sliceValue.setLabel(getResources().getString(R.string.detail_other_apps));
-        values.add(sliceValue);
-
-        sliceValue = new SliceValue(dayRemainingPercent , ChartUtils.pickColor());
-        sliceValue.setLabel(getResources().getString(R.string.detail_unused));
-        values.add(sliceValue);
-
-        sliceValue = new SliceValue(thisPercent , ChartUtils.pickColor());
-        sliceValue.setLabel(getResources().getString(R.string.detail_this_app));
-        values.add(sliceValue);
+        long totalUsage = Tools.findTotalUsage(appFilteredEvents.appEvents);
+        String formattedTime = Tools.formatTotalTime(0, totalUsage, true);
 
 
-        data = new PieChartData(values);
-        data.setHasLabels(true);
-        data.setHasLabelsOutside(true);
-        data.setHasCenterCircle(true);
-        chart.offsetLeftAndRight(50);
+        ArrayList<PieEntry> entries = new ArrayList<>();
 
-        chart.setChartRotationEnabled(false);
-        chart.setValueSelectionEnabled(false);
-        chart.setCircleFillRatio(0.7f);
-        chart.setPieChartData(data);
-        chart.setVisibility(View.VISIBLE);
+        entries.add(new PieEntry(otherPercent, getResources().getString(R.string.detail_other_apps)));
+        entries.add(new PieEntry(dayRemainingPercent, getResources().getString(R.string.detail_unused)));
+        entries.add(new PieEntry(thisPercent, getResources().getString(R.string.detail_this_app)));
+
+        PieDataSet dataSet = new PieDataSet(entries, "App usage");
+        dataSet.setSliceSpace(3f);
+        dataSet.setSelectionShift(6f);
+        dataSet.setColors(Tools.getColours(entries.size()));
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setDrawValues(false);
+
+        mChart.setUsePercentValues(true);
+        mChart.getDescription().setEnabled(false);
+        mChart.setExtraOffsets(20.f, 0.f, 20.f, 0.f);
+        mChart.setDragDecelerationFrictionCoef(0.95f);
+        mChart.setDrawHoleEnabled(true);
+        mChart.setHoleColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.textWhite));
+        mChart.setCenterText(generateCenterSpannableText(mAppName, formattedTime));
+        mChart.setTransparentCircleColor(Color.WHITE);
+        mChart.setTransparentCircleAlpha(110);
+
+        mChart.setHoleRadius(58f);
+        mChart.setTransparentCircleRadius(64f);
+        mChart.setRotationAngle(0);
+        mChart.setRotationEnabled(true);
+        mChart.setHighlightPerTapEnabled(true);
+        mChart.setEntryLabelColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.textBlack));
+        float finalOtherPercent = otherPercent;
+        float finalThisPercent = thisPercent;
+        mChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry entry, Highlight highlight) {
+                if (entry == null)
+                    return;
+
+                float label = entry.getY();
+                if (label == dayRemainingPercent) {
+                    String formattedTime = Tools.formatTotalTime(0, (long) ((TIME_DAY - TIME_USED_OTHERS - TIME_USED_THIS) * 1000), true);
+                    mChart.setCenterText(generateCenterSpannableText(
+                            getString(R.string.detail_unused), formattedTime));
+                } else if (label == finalOtherPercent) {
+                    String formattedTime = Tools.formatTotalTime(0, (long) (TIME_USED_OTHERS * 1000), true);
+                    mChart.setCenterText(generateCenterSpannableText(
+                            getString(R.string.detail_other_apps), formattedTime));
+                } else if (label == finalThisPercent) {
+                    String formattedTime = Tools.formatTotalTime(0, (long) (TIME_USED_THIS * 1000), true);
+                    mChart.setCenterText(generateCenterSpannableText(mAppName, formattedTime));
+                }
+            }
+
+            @Override
+            public void onNothingSelected() {
+                String formattedTime = Tools.formatTotalTime(0, (long) (TIME_USED_THIS * 1000), true);
+                mChart.setCenterText(generateCenterSpannableText(mAppName, formattedTime));
+            }
+        });
+
+        PieData data = new PieData(dataSet);
+
+        Legend l = mChart.getLegend();
+        l.setEnabled(false);
+
+        mChart.setData(data);
+        mChart.setVisibility(View.VISIBLE);
+        mChart.animateY(1400, Easing.EasingOption.EaseInOutQuad);
+    }
+
+    private SpannableString generateCenterSpannableText(String name, String formattedTime) {
+
+        SpannableString s = new SpannableString(name + "\n\n" + ((formattedTime == null) ?
+                getResources().getString(R.string.no_usage) : formattedTime));
+
+        s.setSpan(new RelativeSizeSpan(0.9f), 0, name.length(), 0);
+        s.setSpan(new StyleSpan(Typeface.NORMAL), name.length(), s.length(), 0);
+        s.setSpan(new ForegroundColorSpan(
+                        ContextCompat.getColor(getActivity().getApplicationContext(), R.color.textBlack)),
+                0, name.length(), 0);
+        s.setSpan(new ForegroundColorSpan(
+                        ContextCompat.getColor(getActivity().getApplicationContext(), R.color.textDarkGray)),
+                name.length() + 1, s.length(), 0);
+        s.setSpan(new RelativeSizeSpan(0.8f), name.length() + 1, s.length(), 0);
+        return s;
     }
 }
