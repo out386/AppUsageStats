@@ -44,6 +44,7 @@ import com.turingtechnologies.materialscrollbar.TouchScrollBar;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -196,7 +197,12 @@ public class AppDetailFragment extends LifecycleFragment {
     }
 
     private void setPie(AppFilteredEvents appFilteredEvents) {
-        final double TIME_DAY = 86399;
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, 1970);
+        calendar.set(Calendar.DAY_OF_YEAR, 1);
+
+        final double TIME_DAY = (calendar.getTimeInMillis()
+                + TimeZone.getDefault().getOffset(calendar.getTimeInMillis())) / 1000;
         final double TIME_USED_OTHERS = Tools.findTotalUsage(appFilteredEvents.otherEvents) / 1000;
         final double TIME_USED_THIS = Tools.findTotalUsage(appFilteredEvents.appEvents) / 1000;
 
