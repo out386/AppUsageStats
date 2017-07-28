@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,10 +15,10 @@ import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.adapters.ScrollAdapter;
@@ -57,6 +58,12 @@ public class AppDetailFragment extends LifecycleFragment {
     RecyclerView mRecyclerView;
     @BindView(R.id.detail_chart)
     PieChart mChart;
+    @BindView(R.id.detail_no_usage)
+    TextView noUsageTV;
+    @BindView(R.id.detail_chart_no_usage)
+    TextView noUsageChartTV;
+    @BindView(R.id.appbar)
+    AppBarLayout appBarLayout;
 
     private Unbinder mUnbinder;
     private FormatEventsViewModel formatCustomUsageEvents;
@@ -122,7 +129,14 @@ public class AppDetailFragment extends LifecycleFragment {
                     AppFilteredEvents appFilteredEvents = Tools.getSpecificAppEvents(allEvents, mAppName);
                     if (appFilteredEvents.appEvents == null || appFilteredEvents.appEvents.size() == 0) {
                         mTotalAdapter.clear();
+                        noUsageTV.setVisibility(View.VISIBLE);
+                        noUsageChartTV.setVisibility(View.VISIBLE);
+                        mRecyclerView.setVisibility(View.GONE);
                         return;
+                    } else {
+                        noUsageTV.setVisibility(View.GONE);
+                        noUsageChartTV.setVisibility(View.GONE);
+                        mRecyclerView.setVisibility(View.VISIBLE);
                     }
 
                     setPie(appFilteredEvents);
