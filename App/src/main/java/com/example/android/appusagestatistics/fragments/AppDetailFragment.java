@@ -197,12 +197,40 @@ public class AppDetailFragment extends LifecycleFragment {
     }
 
     private void setPie(AppFilteredEvents appFilteredEvents) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.YEAR, 1970);
-        calendar.set(Calendar.DAY_OF_YEAR, 1);
+        Calendar elapsedTodayCalendar = Calendar.getInstance();
+        Calendar endTime = Calendar.getInstance();
+        elapsedTodayCalendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+        endTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+        elapsedTodayCalendar.setTimeInMillis(elapsedTodayCalendar.getTimeInMillis()
+                + TimeZone.getDefault().getOffset(elapsedTodayCalendar.getTimeInMillis()));
+        endTime.setTimeInMillis(appFilteredEvents.endTime
+                + TimeZone.getDefault().getOffset(endTime.getTimeInMillis()));
+        long adjustedPeriodEndTime;
 
-        final double TIME_DAY = (calendar.getTimeInMillis()
-                + TimeZone.getDefault().getOffset(calendar.getTimeInMillis())) / 1000;
+        if (endTime.get(Calendar.YEAR) < elapsedTodayCalendar.get(Calendar.YEAR)
+                || endTime.get(Calendar.DAY_OF_YEAR) < elapsedTodayCalendar.get(Calendar.DAY_OF_YEAR)) {
+
+            Calendar startTime = Calendar.getInstance();
+            startTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+            startTime.setTimeInMillis(appFilteredEvents.startTime
+                    + TimeZone.getDefault().getOffset(startTime.getTimeInMillis()));
+
+            int offset = endTime.get(Calendar.DAY_OF_YEAR) - startTime.get(Calendar.DAY_OF_YEAR);
+
+            endTime.set(Calendar.YEAR, 1970);
+            endTime.set(Calendar.DAY_OF_YEAR, offset + 1);
+            endTime.set(Calendar.HOUR_OF_DAY, 23);
+            endTime.set(Calendar.MINUTE, 59);
+            endTime.set(Calendar.SECOND, 59);
+            endTime.set(Calendar.MILLISECOND, 999);
+            adjustedPeriodEndTime = endTime.getTimeInMillis();
+        } else {
+            elapsedTodayCalendar.set(Calendar.YEAR, 1970);
+            elapsedTodayCalendar.set(Calendar.DAY_OF_YEAR, 1);
+            adjustedPeriodEndTime = elapsedTodayCalendar.getTimeInMillis();
+        }
+
+        final double TIME_DAY = adjustedPeriodEndTime / 1000;
         final double TIME_USED_OTHERS = Tools.findTotalUsage(appFilteredEvents.otherEvents) / 1000;
         final double TIME_USED_THIS = Tools.findTotalUsage(appFilteredEvents.appEvents) / 1000;
 
@@ -210,7 +238,7 @@ public class AppDetailFragment extends LifecycleFragment {
         float dayRemainingPercent = (float) ((TIME_DAY - TIME_USED_OTHERS - TIME_USED_THIS) / TIME_DAY * 100);
         float thisPercent = (float) (TIME_USED_THIS / TIME_DAY * 100);
 
-        // Anything less than 1 is invisible on the chart
+        // Anything less than 1 tends to be invisible on the chart
         if (otherPercent < 1)
             otherPercent = 1;
         if (thisPercent < 1)

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.util.Log;
 import android.view.Display;
 
 import com.example.android.appusagestatistics.models.AppFilteredEvents;
@@ -17,10 +16,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-
-import lecho.lib.hellocharts.util.ChartUtils;
-
-import static com.github.mikephil.charting.utils.ColorTemplate.rgb;
 
 /**
  * Created by j on 12/7/17.
@@ -125,6 +120,8 @@ public class Tools {
 
     public static AppFilteredEvents getSpecificAppEvents(List<DisplayEventEntity> allEvents, String appName) {
         AppFilteredEvents appFilteredEvents = new AppFilteredEvents();
+        appFilteredEvents.startTime = allEvents.get(allEvents.size() - 1).startTime;
+        appFilteredEvents.endTime = allEvents.get(0).endTime;
         for (DisplayEventEntity event : allEvents) {
             if (appName.equals(event.appName))
                 appFilteredEvents.appEvents.add(event);
@@ -151,12 +148,12 @@ public class Tools {
         final int COLOR_ORANGE = Color.parseColor("#FFBB33");
         final int COLOR_RED = Color.parseColor("#FF4444");
 
-        final int [] COLORS = new int[]{COLOR_BLUE, COLOR_VIOLET, COLOR_ORANGE, COLOR_RED};
+        final int[] COLORS = new int[]{COLOR_BLUE, COLOR_VIOLET, COLOR_ORANGE, COLOR_RED};
 
-        int [] colours = new int[count];
+        int[] colours = new int[count];
         int numberGenerated = 0;
         while (numberGenerated <= count) {
-            colours[numberGenerated] = COLORS[(int)Math.round(Math.random() * (COLORS.length - 1))];
+            colours[numberGenerated] = COLORS[(int) Math.round(Math.random() * (COLORS.length - 1))];
             if (count >= 3 && count <= COLORS.length - 1 && numberGenerated != 0) {
                 int nextIndex;
                 if (numberGenerated + 1 < count)
@@ -164,7 +161,7 @@ public class Tools {
                 else
                     nextIndex = 0;
             }
-            numberGenerated ++;
+            numberGenerated++;
         }
         return colours;
     }
