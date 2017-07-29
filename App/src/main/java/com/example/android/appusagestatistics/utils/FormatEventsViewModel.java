@@ -9,8 +9,11 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.persistence.room.Room;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.util.Pair;
 
 import com.example.android.appusagestatistics.R;
 import com.example.android.appusagestatistics.database.Database;
@@ -19,6 +22,7 @@ import com.example.android.appusagestatistics.models.DisplayEventEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,16 +32,15 @@ import java.util.List;
 
 public class FormatEventsViewModel extends AndroidViewModel {
 
-    private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
-    private MutableLiveData<List<DisplayEventEntity>> appCachedLiveData = new MutableLiveData<>();
-    private Database db;
-    private PackageManager pm;
-
-
+    private static HashMap<String, Pair<Bitmap, String>> iconMap = new HashMap<>(150);
     public int mDateOffset = 0;
     public boolean isJustNoOffset = false;
     public boolean isDateLayoutVisible = true;
     public String formattedDate;
+    private MutableLiveData<List<DisplayEventEntity>> displayLiveData = new MutableLiveData<>();
+    private MutableLiveData<List<DisplayEventEntity>> appCachedLiveData = new MutableLiveData<>();
+    private Database db;
+    private PackageManager pm;
 
     public FormatEventsViewModel(Application application) {
         super(application);
@@ -169,15 +172,33 @@ public class FormatEventsViewModel extends AndroidViewModel {
     }
 
     private void insertIconName(DisplayEventEntity event, boolean needsAppName) {
-        try {
-            event.appIcon = pm
-                    .getApplicationIcon(event.packageName);
-        } catch (PackageManager.NameNotFoundException e) {
-            event.appIcon = getApplication()
-                    .getDrawable(R.drawable.ic_default_app_launcher);
+        Pair<Bitmap, String> pair = iconMap.get(event.packageName);
+        if (pair != null) {
+            event.appIcon = pair.first;
+            if (needsAppName) {
+                if (pair.second != null)
+                    event.appName = pair.second;
+                else {
+                    event.appName = getAppName(event.packageName);
+                    iconMap.remove(event.packageName);
+                    iconMap.put(event.packageName, new Pair<>(event.appIcon, event.appName));
+                }
+            }
+        } else {
+            try {
+                event.appIcon = ((BitmapDrawable) pm
+                        .getApplicationIcon(event.packageName)).getBitmap();
+            } catch (PackageManager.NameNotFoundException e) {
+                BitmapDrawable bitmapDrawable = ((BitmapDrawable) getApplication()
+                        .getDrawable(R.drawable.ic_default_app_launcher));
+                if (bitmapDrawable != null)
+                    event.appIcon = bitmapDrawable.getBitmap();
+            }
+            if (needsAppName)
+                event.appName = getAppName(event.packageName);
+            iconMap.put(event.packageName, new Pair<>(event.appIcon, event.appName));
         }
-        if (needsAppName)
-            event.appName = getAppName(event.packageName);
+
     }
 
     private String getAppName(String packageName) {
@@ -349,9 +370,9 @@ public class FormatEventsViewModel extends AndroidViewModel {
 
             @Override
             protected void onPostExecute(List<DisplayEventEntity> eventsInDb) {
-               // for (int i = 0; i < 5 && i < eventsInDb.size(); i++) {
-               //     Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
-               // }
+                // for (int i = 0; i < 5 && i < eventsInDb.size(); i++) {
+                //     Log.i("database", "onPostExecute: " + eventsInDb.get(i).appName + " " + eventsInDb.get(i).startTime);
+                // }
 
                 for (DisplayEventEntity displayEventEntity : eventsInDb) {
                     insertIconName(displayEventEntity, false);

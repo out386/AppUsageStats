@@ -2,6 +2,7 @@ package com.example.android.appusagestatistics.models;
 
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
 @Entity(tableName = "events", primaryKeys = {"startTime", "appName"})
@@ -13,7 +14,7 @@ public class DisplayEventEntity {
     public String packageName;
 
     @Ignore
-    public Drawable appIcon;
+    public Bitmap appIcon;
 
     public DisplayEventEntity() {
 

@@ -33,11 +33,9 @@ import com.example.android.appusagestatistics.utils.Tools;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -81,7 +79,7 @@ public class UsageListAdapter extends RecyclerView.Adapter<UsageListAdapter.View
         long startTime = Math.round(mCustomUsageStatsList.get(position).startTime / 1000D) * 1000;
         long endTime = Math.round(mCustomUsageStatsList.get(position).endTime / 1000D) * 1000;
 
-        viewHolder.mAppIcon.setImageDrawable(mCustomUsageStatsList.get(position).appIcon);
+        viewHolder.mAppIcon.setImageBitmap(mCustomUsageStatsList.get(position).appIcon);
         viewHolder.mStartTime.setText(mDateFormat.format(new Date(startTime)));
         if (mCustomUsageStatsList.get(position).ongoing == 1) {
             viewHolder.mTotalTime.setText(mContext.getResources().getString(R.string.ongoing));

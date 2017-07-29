@@ -32,7 +32,7 @@ public class TotalItem extends GenericAbstractItem<DisplayEventEntity, TotalItem
         super(displayEventEntity);
 
     }
-    
+
     @Override
     public int getType() {
         return R.id.start_time;
@@ -46,14 +46,14 @@ public class TotalItem extends GenericAbstractItem<DisplayEventEntity, TotalItem
     @Override
     public void bindView(ViewHolder viewHolder, List<Object> payloads) {
         super.bindView(viewHolder, payloads);
-        
+
         viewHolder.mAppName.setText(getModel().appName);
 
         // Rounding off to the nearest second, as we aren't showing milliseconds
         long startTime = Math.round(getModel().startTime / 1000D) * 1000;
         long endTime = Math.round(getModel().endTime / 1000D) * 1000;
 
-        viewHolder.mAppIcon.setImageDrawable(getModel().appIcon);
+        viewHolder.mAppIcon.setImageBitmap(getModel().appIcon);
         viewHolder.mStartTime.setText(mDateFormat.format(new Date(startTime)));
 
         if (getModel().ongoing == 1) {
@@ -64,7 +64,7 @@ public class TotalItem extends GenericAbstractItem<DisplayEventEntity, TotalItem
 
         String totalTime = Tools.formatTotalTime(startTime, endTime, true);
         viewHolder.mTotalTime.setText(totalTime == null ? viewHolder.mTotalTime.getContext()
-                        .getResources().getString(R.string.no_usage) : totalTime);
+                .getResources().getString(R.string.no_usage) : totalTime);
     }
 
     @Override
@@ -77,14 +77,15 @@ public class TotalItem extends GenericAbstractItem<DisplayEventEntity, TotalItem
             holder.mAppIcon.setImageDrawable(null);
     }
 
+    @Override
+    public ViewHolderFactory<? extends ViewHolder> getFactory() {
+        return FACTORY;
+    }
+
     private static class ItemFactory implements ViewHolderFactory<ViewHolder> {
         public ViewHolder create(View v) {
             return new ViewHolder(v);
         }
-    }
-    @Override
-    public ViewHolderFactory<? extends ViewHolder> getFactory() {
-        return FACTORY;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
