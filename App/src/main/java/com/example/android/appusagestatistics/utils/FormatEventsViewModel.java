@@ -10,8 +10,11 @@ import android.arch.persistence.room.Room;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.Pair;
 
@@ -185,20 +188,35 @@ public class FormatEventsViewModel extends AndroidViewModel {
                 }
             }
         } else {
+            Drawable drawable = null;
             try {
-                event.appIcon = ((BitmapDrawable) pm
-                        .getApplicationIcon(event.packageName)).getBitmap();
+                drawable = pm.getApplicationIcon(event.packageName);
             } catch (PackageManager.NameNotFoundException e) {
-                BitmapDrawable bitmapDrawable = ((BitmapDrawable) getApplication()
-                        .getDrawable(R.drawable.ic_default_app_launcher));
-                if (bitmapDrawable != null)
-                    event.appIcon = bitmapDrawable.getBitmap();
+                Drawable icon = getApplication()
+                        .getDrawable(R.drawable.ic_default_app_launcher);
+                if (icon != null)
+                    event.appIcon = getBitmapFromDrawable(icon);
             }
+            if (drawable instanceof BitmapDrawable)
+                event.appIcon = ((BitmapDrawable) drawable).getBitmap();
+            else if (drawable != null)
+                event.appIcon = getBitmapFromDrawable(drawable);
             if (needsAppName)
                 event.appName = getAppName(event.packageName);
             iconMap.put(event.packageName, new Pair<>(event.appIcon, event.appName));
         }
 
+    }
+
+    // Author: Evgenii Kanivets
+    @NonNull
+    private static Bitmap getBitmapFromDrawable(@NonNull Drawable drawable) {
+        Bitmap bmp = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bmp;
     }
 
     private String getAppName(String packageName) {
